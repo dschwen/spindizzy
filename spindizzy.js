@@ -30,6 +30,50 @@ var bsd = [
   { h:[0,0,0,2],s:2 }, //  1 steep gable W
 ];
 
+// Stage size
+var sx=8, sy=8;
+
+// Test-level
+var level1 = {
+  // bocktable [bsd_id,z,base_depth]
+  bt: [ [0,0,1],[0,1,2] ], 
+  // initializer function for procedural level generation (optional)
+  pre: function() { 
+    var x,y,b = [];
+    for(x=0;x<sx;++x) {
+      b[x]=[]; for(y=0;y<sx;++y) b[x][y]=(x==0||y==0||x==sx-1||y==sy-1)?[1]:[0]; 
+    }
+    this.b = b; // final level data stored in b
+  },
+  // x,y,bt_id level data to be added to the procedurally initialized level
+  data: [[4,4,2]],
+  // procedural post processing
+  post: function() {
+  }
+};
+
+// prepare level object
+function prepareLevel(l) {
+  var x,y,i;
+
+  // initialize level
+  for(x=0;x<sx;++x) {
+    l.b[x]=[]; for(y=0;y<sy;++y) b[x][y]=[]; 
+  }
+
+  // pre process
+  if( ('pre' in l) && (typeof l.pre == 'function') ) l.pre();
+
+  // insert data
+  for(i=0; i<l.data.length; ++i) b[l.data[i][0]][l.data[i][1]].push(l.data[i][2]);
+
+  // post process
+  if( ('post' in l) && (typeof l.post == 'function') ) l.post();
+}
+
+// WebGL context
+var gl;
+
 //
 // Setup game widget
 //
@@ -37,47 +81,53 @@ function Install() {
   // defaults
   var hasCanvas = "HTMLCanvasElement" in window;
 
-  function setupWebGL(gl) {
-    // initialize building webgl module
-    gl.clearColor(0,0,0,0.0);
-    gl.clearDepth(1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthMask(true);
-    gl.depthFunc(gl.LEQUAL);
-    gl.clear( gl.COLOR_BUFFER_BIT + gl.DEPTH_BUFFER_BIT );
+  if( !hasCanvas ) return;
 
-    // compile shaders
-    var program = gl.createProgram();
-    
-    function initShader(id, type) {
-      var shader = gl.createShader(type);
-      gl.shaderSource(shader, $('#'+id).text() );
-      gl.compileShader(shader);
-      gl.attachShader(program, shader);
-      return shader; 
-    }
+  var c = document.getElementById('gamecanvas');
+  gl = c.getContext("experimental-webgl");
 
-    var vshader = initShader('bldg-vs',gl.VERTEX_SHADER),
-        fshader = initShader('bldg-fs',gl.FRAGMENT_SHADER);
-    
-    gl.linkProgram(program);
-    gl.useProgram(program);
+  // initialize building webgl module
+  gl.clearColor(0,0,0,1.0);
+  gl.clearDepth(1.0);
+  gl.enable(gl.DEPTH_TEST);
+  gl.depthMask(true);
+  gl.depthFunc(gl.LEQUAL);
+  gl.clear( gl.COLOR_BUFFER_BIT + gl.DEPTH_BUFFER_BIT );
 
-    program.vertexPosAttrib = gl.getAttribLocation(program, 'pos');
-    gl.enableVertexAttribArray(program.vertexPosAttrib);
+  // compile shaders
+  var program = gl.createProgram();
+  
+  function initShader(id, type) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, document.getElementById(id).text );
+    gl.compileShader(shader);
+    gl.attachShader(program, shader);
+    return shader; 
+  }
 
-    program.normalPosAttrib = gl.getAttribLocation(program, 'norm');
-    gl.enableVertexAttribArray(program.normalPosAttrib);
+  var vshader = initShader('bldg-vs',gl.VERTEX_SHADER),
+      fshader = initShader('bldg-fs',gl.FRAGMENT_SHADER);
+  
+  gl.linkProgram(program);
+  gl.useProgram(program);
 
-    var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
-    var centerdegLocation  = gl.getUniformLocation(program, "u_centerdeg");
-    var lightdirLocation   = gl.getUniformLocation(program, "u_lightdir");
-    
-    var lx=3, ly=2, lz=5;
-    r = Math.sqrt(lx*lx+ly*ly+lz*lz);
-    gl.uniform3f(lightdirLocation, lx/r,ly/r,lz/r );
+  program.vertexPosAttrib = gl.getAttribLocation(program, 'pos');
+  gl.enableVertexAttribArray(program.vertexPosAttrib);
 
-    return function() {
+  program.normalPosAttrib = gl.getAttribLocation(program, 'norm');
+  gl.enableVertexAttribArray(program.normalPosAttrib);
+
+  var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+  var centerdegLocation  = gl.getUniformLocation(program, "u_centerdeg");
+  var lightdirLocation   = gl.getUniformLocation(program, "u_lightdir");
+  
+  var lx=3, ly=2, lz=5;
+  r = Math.sqrt(lx*lx+ly*ly+lz*lz);
+  gl.uniform3f(lightdirLocation, lx/r,ly/r,lz/r );
+
+  gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    /*return function() {
       // draw arrays
       var dx = wma_width/2, dy = wma_height/2
         , f0 = 60.0/(128*1<<wma_zoom);
@@ -92,6 +142,5 @@ function Install() {
       gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
       
       //wmajt.renderWebGLBuildingData();
-    }
-  }
+    */
 }
