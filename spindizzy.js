@@ -118,7 +118,7 @@ function Install() {
   gl.enableVertexAttribArray(program.normalPosAttrib);
 
   var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
-  var centerdegLocation  = gl.getUniformLocation(program, "u_centerdeg");
+  var centerdegLocation  = gl.getUniformLocation(program, "u_rotation");
   var lightdirLocation   = gl.getUniformLocation(program, "u_lightdir");
   
   var lx=3, ly=2, lz=5;
