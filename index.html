@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!--
+	WikiMiniAtlas external version, IFrame file
+        2008 by Daniel Schwen, licensed under GFDL
+-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="stylesheet" href="wikiminiatlas.css" type="text/css">
+<script id="shader-fs" type="x-shader/x-fragment">
+  precision mediump float;
+
+  varying vec2 vTextureCoord;
+  varying vec3 vLightWeighting;
+
+  uniform sampler2D uSampler;
+
+  void main(void) {
+    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);
+  }
+</script>
+<script id="shader-vs" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+  attribute vec3 aVertexNormal;
+  attribute vec2 aTextureCoord;
+
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  uniform mat3 uNMatrix;
+
+  uniform vec3 uAmbientColor;
+
+  uniform vec3 uLightingDirection;
+  uniform vec3 uDirectionalColor;
+
+  varying vec2 vTextureCoord;
+  varying vec3 vLightWeighting;
+
+  void main(void) {
+    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    vTextureCoord = aTextureCoord;
+
+    vec3 transformedNormal = uNMatrix * aVertexNormal;
+    float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
+    vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
+  }
+</script>
+<script id="bldg-vs" type="x-shader/x-vertex">
+  attribute vec3 pos;
+  attribute vec3 norm;
+  uniform vec3 u_resolution;
+  uniform vec3 u_centerdeg;
+  uniform vec3 u_lightdir;
+  varying float light;
+  void main() {
+    vec3 proj = (pos-u_centerdeg)/u_resolution;
+    proj *= vec3(1.0+1.5*proj[2],1.0+1.5*proj[2],-1.0);
+    gl_Position = vec4(proj,1.0);
+    light = dot(norm,u_lightdir)*0.25+0.75;
+  }
+</script>
+<script id="bldg-fs" type="x-shader/x-fragment">
+  precision mediump float;
+  varying float light;
+  void main() {
+    gl_FragColor = vec4(light, light, light, 1.0);
+  }
+</script>
+<script src="wikiminiatlas_extern.php" type="text/javascript"></script>
+</head>
+<body style="padding:0px;" onselectstart="return false">
+  <div id="wma_widget">
+    <img id="wmaspinner" src="http://upload.wikimedia.org/wikipedia/commons/4/42/Loading.gif">
+  </div>
+<script>
+  $(function(){
+    wikiminiatlasInstall($('#wma_widget'));
+  });
+</script>
+</body>
+</html>
