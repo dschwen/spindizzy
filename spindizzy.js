@@ -117,13 +117,25 @@ function Install() {
   program.normalPosAttrib = gl.getAttribLocation(program, 'norm');
   gl.enableVertexAttribArray(program.normalPosAttrib);
 
-  var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
-  var centerdegLocation  = gl.getUniformLocation(program, "u_rotation");
-  var lightdirLocation   = gl.getUniformLocation(program, "u_lightdir");
+  var u_mvp      = gl.getUniformLocation(program, "u_mvp"),
+      u_lightdir = gl.getUniformLocation(program, "u_lightdir"),
+      u_palette  = gl.getUniformLocation(program, "u_palette");
   
+  // 16 color palette (last color is random)
+  var palette = [ 0,0,0, 1,1,1, 1,0,0, 0,1,0, 
+                  0,0,1, 1,1,0, 0,1,1, 1,0,1, 
+                  .5,.5,.5, 1,.5,.5, .5,1,.5, .5,.5,1,
+                  1,1,.5, .5,1,1, 1,.5,1, 0,0,0 ];
+  
+  function updatePalette() {
+    for(var i=15*3; i<16*3; ++i) palette[i] = Math.random();
+    gl.uniform3fv(u_palette, palette);
+  }
+  updatePalette();
+
   var lx=3, ly=2, lz=5;
   r = Math.sqrt(lx*lx+ly*ly+lz*lz);
-  gl.uniform3f(lightdirLocation, lx/r,ly/r,lz/r );
+  gl.uniform3f(u_lightdir, lx/r,ly/r,lz/r );
 
   gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
