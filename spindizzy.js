@@ -21,14 +21,14 @@ function Spindizzy() {
     { h:[0,2,2,0],s:0 }, //  6 steep ramp ES
     { h:[0,0,2,2],s:0 }, //  7 steep ramp SW
     { h:[2,0,0,2],s:0 }, //  8 steep ramp WN
-    { h:[1,0,0,0],s:1 }, //  1 shallow gable N
-    { h:[0,1,0,0],s:2 }, //  1 shallow gable E
-    { h:[0,0,1,0],s:1 }, //  1 shallow gable S
-    { h:[0,0,0,1],s:2 }, //  1 shallow gable W
-    { h:[2,0,0,0],s:1 }, //  1 steep gable N
-    { h:[0,2,0,0],s:2 }, //  1 steep gable E
-    { h:[0,0,2,0],s:1 }, //  1 steep gable S
-    { h:[0,0,0,2],s:2 }, //  1 steep gable W
+    { h:[1,0,0,0],s:1 }, //  9 shallow gable N
+    { h:[0,1,0,0],s:2 }, // 10 shallow gable E
+    { h:[0,0,1,0],s:1 }, // 11 shallow gable S
+    { h:[0,0,0,1],s:2 }, // 12 shallow gable W
+    { h:[2,0,0,0],s:1 }, // 13 steep gable N
+    { h:[0,2,0,0],s:2 }, // 14 steep gable E
+    { h:[0,0,2,0],s:1 }, // 15 steep gable S
+    { h:[0,0,0,2],s:2 }, // 16 steep gable W
   ];
 
   // Stage size
@@ -37,7 +37,7 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,1],[0,1,2] ], 
+    bt: [ [0,0,1],[0,1,2],[14,2,3] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
       var x,y,b = [];
@@ -47,7 +47,7 @@ function Spindizzy() {
       this.b = b; // final level data stored in b
     },
     // x,y,bt_id level data to be added to the procedurally initialized level
-    data: [], //[[4,4,2]],
+    data: [[4,4,2]],
     // procedural post processing
     post: function() {
     }
@@ -80,7 +80,7 @@ function Spindizzy() {
   function triLevel(l) {
     if( !('b'in l) ) prepareLevel(l);
 
-    var a,c,bg, i,j,j2,k=0,x,y,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
+    var a,c,bg, i,j,j2,k=0,x,y,x0,y0,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
 
     if( !g.va || !g.na || !g.ca ) {
       g.va = new Float32Array(glBufSize*9);
@@ -99,8 +99,10 @@ function Spindizzy() {
     }
 
     for(x=0;x<sx;++x) {
+      x0=x-4.0;
       for(y=0;y<sy;++y) {
         c=l.b[x][y];
+        y0=y-4.0;
         for(i=0;i<c.length;++i) {
           if(c[i]<0) continue;
           a=l.bt[c[i]]; // block table entry
@@ -110,12 +112,23 @@ function Spindizzy() {
           for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
             j2=(j+1)%4;
             // insert two triangles for each side
-            vncPush([x+base[j][0],z0,y+base[j][1], x+base[j2][0],z0,y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
+            vncPush([x0+base[j][0],z0,y0+base[j][1], x0+base[j2][0],z0,y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
                     [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],1);
-            vncPush([x+base[j2][0],z0,y+base[j2][1], x+base[j2][0],z+bg.h[j2],y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
-                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],2);
+            vncPush([x0+base[j2][0],z0,y0+base[j2][1], x0+base[j2][0],z+bg.h[j2],y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
+                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],1);
           }
           // insert two triangles for the top surface
+          if( bg.s!=2 ) {
+            vncPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1] ],
+                    [0,1,0,0,1,0,0,1,0],2);
+            vncPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+                    [0,1,0,0,1,0,0,1,0],3);
+          } else {
+            vncPush([ x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+                    [0,1,0,0,1,0,0,1,0],4);
+            vncPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+                    [0,1,0,0,1,0,0,1,0],15);
+          }
         }
       }
     }
@@ -143,12 +156,12 @@ function Spindizzy() {
     gl.uniform3fv(g.u_palette, palette);
   }
 
-  var cw,ch,rot=Math.PI/4, targetRot=0, mat=[], xangle=-Math.PI/6;
+  var cw,ch,rot=Math.PI/4, targetRot=0, mat=[], xangle=-Math.PI/4;
   var r2=[1,0,0,0,0,Math.cos(xangle),Math.sin(xangle),0,0,-Math.sin(xangle),Math.cos(xangle),0,0,0,0,1];
   function updateProjection() {
     var sx,sy,sz=0.1,s=Math.sin(rot),c=Math.cos(rot);
     sx=0.1; sy=0.1; //TODO:screen apsect ratio!
-    var s1=[sx,0,0,0,0,sy,0,0,0,0,sz,0,0,0,0,1];
+    var s1=[sx,0,0,0,0,sy,0,0,0,0,sz,0,0,-0.3,0,1];
     var r1=[c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1];
     
     function mul(a,b) {
@@ -186,6 +199,7 @@ function Spindizzy() {
     rot+=0.01;
     setTimeout(draw,22);
     updateProjection();
+    updatePalette();
   }
 
   //
@@ -253,6 +267,7 @@ function Spindizzy() {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
     gl.enable(gl.CULL_FACE);
+    //gl.cullFace(gl.FRONT);
     gl.cullFace(gl.BACK);
   }
 
