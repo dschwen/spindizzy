@@ -12,23 +12,32 @@ function Spindizzy() {
   //   2 = split along EW axis
   //
   var bgeo = [
-    { h:[0,0,0,0],s:0 }, //  0 flat floor
-    { h:[1,1,0,0],s:0 }, //  1 shallow ramp NE
-    { h:[0,1,1,0],s:0 }, //  2 shallow ramp ES
-    { h:[0,0,1,1],s:0 }, //  3 shallow ramp SW
-    { h:[1,0,0,1],s:0 }, //  4 shallow ramp WN
-    { h:[2,2,0,0],s:0 }, //  5 steep ramp NE
-    { h:[0,2,2,0],s:0 }, //  6 steep ramp ES
-    { h:[0,0,2,2],s:0 }, //  7 steep ramp SW
-    { h:[2,0,0,2],s:0 }, //  8 steep ramp WN
-    { h:[1,0,0,0],s:1 }, //  9 shallow gable N
-    { h:[0,1,0,0],s:2 }, // 10 shallow gable E
-    { h:[0,0,1,0],s:1 }, // 11 shallow gable S
-    { h:[0,0,0,1],s:2 }, // 12 shallow gable W
-    { h:[2,0,0,0],s:1 }, // 13 steep gable N
-    { h:[0,2,0,0],s:2 }, // 14 steep gable E
-    { h:[0,0,2,0],s:1 }, // 15 steep gable S
-    { h:[0,0,0,2],s:2 }, // 16 steep gable W
+    { h:[0,0,0,0],s:0,t:2 }, //  0 flat floor
+    { h:[1,1,0,0],s:0,t:2 }, //  1 shallow ramp NE
+    { h:[0,1,1,0],s:0,t:2 }, //  2 shallow ramp ES
+    { h:[0,0,1,1],s:0,t:2 }, //  3 shallow ramp SW
+    { h:[1,0,0,1],s:0,t:2 }, //  4 shallow ramp WN
+    { h:[2,2,0,0],s:0,t:2 }, //  5 steep ramp NE
+    { h:[0,2,2,0],s:0,t:2 }, //  6 steep ramp ES
+    { h:[0,0,2,2],s:0,t:2 }, //  7 steep ramp SW
+    { h:[2,0,0,2],s:0,t:2 }, //  8 steep ramp WN
+    { h:[1,0,0,0],s:1,t:4 }, //  9 shallow gable N
+    { h:[0,1,0,0],s:2,t:5 }, // 10 shallow gable E
+    { h:[0,0,1,0],s:1,t:4 }, // 11 shallow gable S
+    { h:[0,0,0,1],s:2,t:5 }, // 12 shallow gable W
+    { h:[2,0,0,0],s:1,t:5 }, // 13 steep gable N
+    { h:[0,2,0,0],s:2,t:5 }, // 14 steep gable E
+    { h:[0,0,2,0],s:1,t:4 }, // 15 steep gable S
+    { h:[0,0,0,2],s:2,t:5 }, // 16 steep gable W
+    { h:[0,0,0,0],s:0,t:1 }, // 17 trampoline
+    { h:[0,0,0,0],s:0,t:6 }, // 18 switch circle
+    { h:[0,0,0,0],s:0,t:7 }, // 19 switch diamond
+    { h:[0,0,0,0],s:0,t:8 }, // 20 neutralizer
+    { h:[0,0,0,0],s:0,t:11 },// 21 water
+    { h:[0,0,0,0],s:0,t:15 },// 22 arrow NE
+    { h:[0,0,0,0],s:0,t:16 },// 23 arrow ES
+    { h:[0,0,0,0],s:0,t:17 },// 24 arrow SW
+    { h:[0,0,0,0],s:0,t:18 } // 25 arrow WN
   ];
 
   // Stage size
@@ -37,7 +46,7 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,1],[0,1,2],[14,2,3] ], 
+    bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
       var x,y,b = [];
@@ -50,6 +59,9 @@ function Spindizzy() {
     data: [[4,4,2]],
     // procedural post processing
     post: function() {
+      var b=this.b;
+      b[3][0][0]=3;
+      b[4][0][0]=3;
     }
   };
 
@@ -80,16 +92,11 @@ function Spindizzy() {
   function triLevel(l) {
     if( !('b'in l) ) prepareLevel(l);
 
-    var a,c,bg, i,j,j2,k2=0,k3=0,x,y,x0,y0,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
+    var a,c,bg, i,j,j2,k2=0,k3=0,x,y,x0,y0,z,z0, base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
 
-    if( !g.va || !g.na || !g.ta ) {
-      g.va = new Float32Array(glBufSize*9);
-      g.na = new Float32Array(glBufSize*9);
-      g.ta = new Float32Array(glBufSize*3);
-    }
 
     function vntPush(v,n,t,tid) {
-      var xfac=1/16;
+      var xfac=1/32;
       for(var i=0;i<9;++i) {
         g.va[k3]=v[i];
         g.na[k3++]=n[i];
@@ -109,42 +116,44 @@ function Spindizzy() {
           if(c[i]<0) continue;
           a=l.bt[c[i]]; // block table entry
           z=a[1];       // surface level
-          z0=z-a[2];    // bottom end of base
           bg=bgeo[a[0]]; // block geometry descriptor
+          z0=z-a[2];    // bottom end of base
           for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
             j2=(j+1)%4;
             // insert two triangles for each side
-            vntPush([x0+base[j][0],z0,y0+base[j][1], x0+base[j2][0],z0,y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
-                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0.5*(1-a[2]-bg.h[j])],3);
-            vntPush([x0+base[j2][0],z0,y0+base[j2][1], x0+base[j2][0],z+bg.h[j2],y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
-                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0.5*(1-a[2]-bg.h[j2]), 0,0.5*(1-a[2]-bg.h[j]) ],3);
+            if( a[2]!=0 || bg.h[j]!=0 || bg.h[j2]!=0 ) {
+              vntPush([x0+base[j][0],z0,y0+base[j][1], x0+base[j2][0],z0,y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
+                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0.5*(1-a[2]-bg.h[j])],3);
+              vntPush([x0+base[j2][0],z0,y0+base[j2][1], x0+base[j2][0],z+bg.h[j2],y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
+                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0.5*(1-a[2]-bg.h[j2]), 0,0.5*(1-a[2]-bg.h[j]) ],3);
+            }
           }
           // insert two triangles for the top surface
           if( bg.s!=2 ) {
             vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1] ],
-                    [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],1);
+                    [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],bg.t);
             vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
-                    [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],1);
+                    [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],bg.t);
           } else {
             vntPush([ x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
-                    [0,1,0,0,1,0,0,1,0],[1,0,1,1,0,1],5);
+                    [0,1,0,0,1,0,0,1,0],[1,0,1,1,0,1],bg.t);
             vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
-                    [0,1,0,0,1,0,0,1,0],[0,0,1,0,0,1],5);
+                    [0,1,0,0,1,0,0,1,0],[0,0,1,0,0,1],bg.t);
           }
         }
       }
     }
-    g.numTri = k3/3;
+    g.e[0].numTri = k3/3;
 
-    g.vb =  gl.createBuffer();
-    g.nb =  gl.createBuffer();
-    g.tb =  gl.createBuffer();
+    g.e[0].vb =  gl.createBuffer();
+    g.e[0].nb =  gl.createBuffer();
+    g.e[0].tb =  gl.createBuffer();
   
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.vb );
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.e[0].vb );
     gl.bufferData( gl.ARRAY_BUFFER, g.va, gl.STATIC_DRAW );
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.nb );
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.e[0].nb );
     gl.bufferData( gl.ARRAY_BUFFER, g.na, gl.STATIC_DRAW );
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.tb );
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.e[0].tb );
     gl.bufferData( gl.ARRAY_BUFFER, g.ta, gl.STATIC_DRAW );
   }
 
@@ -188,16 +197,19 @@ function Spindizzy() {
     // clear and render
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
-    // bind buffers
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.nb );
-    gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.vb );
-    gl.vertexAttribPointer(g.program.vertexPosAttrib, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.tb );
-    gl.vertexAttribPointer(g.program.textureAttrib, 2, gl.FLOAT, false, 0, 0);
+    var i;
+    for(i=0;i<1;++i) {
+      // bind buffers
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].nb );
+      gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].vb );
+      gl.vertexAttribPointer(g.program.vertexPosAttrib, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].tb );
+      gl.vertexAttribPointer(g.program.textureAttrib, 2, gl.FLOAT, false, 0, 0);
 
-    gl.drawArrays( gl.TRIANGLES, 0, g.numTri );
-
+      // draw call
+      gl.drawArrays( gl.TRIANGLES, 0, g.e[i].numTri );
+    }
     rot+=0.02;
     requestAnimFrame(draw);
     updateProjection();
@@ -298,6 +310,19 @@ function Spindizzy() {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
       gl.generateMipmap(gl.TEXTURE_2D);
     }
+
+    // temporary geometry buffers
+    var glBufSize = 6000;
+    g.va = new Float32Array(glBufSize*9);
+    g.na = new Float32Array(glBufSize*9);
+    g.ta = new Float32Array(glBufSize*3);
+
+    // build movable entities
+    g.e=[{}];
+    g.e[1]={};
+    g.e[1].vb =  gl.createBuffer();
+    g.e[1].nb =  gl.createBuffer();
+    g.e[1].tb =  gl.createBuffer();
   }
 
   Install();
