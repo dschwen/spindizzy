@@ -75,6 +75,22 @@ function Spindizzy() {
   // WebGL context
   var gl, g={};
 
+  // build the triangle and normal buffers for the level l
+  function triLevel(l) {
+    if( !('b'in l) ) prepareLevel(l);
+
+    var t=[], // triangle data
+        c, i,x,y, ;
+
+    for(x=0;x<sx;++x) {
+      for(y=0;y<sy;++y) {
+        c=l.b[x][y];
+        for(i=0;i<c.length;++i) {
+
+        }
+    }
+  }
+
   // 16 color palette (last color is random)
   var palette = [ 0,0,0, 1,1,1, 1,0,0, 0,1,0, 
                   0,0,1, 1,1,0, 0,1,1, 1,0,1, 
