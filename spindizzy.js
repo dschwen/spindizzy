@@ -80,21 +80,23 @@ function Spindizzy() {
   function triLevel(l) {
     if( !('b'in l) ) prepareLevel(l);
 
-    var a,c,bg, i,j,j2,k=0,x,y,x0,y0,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
+    var a,c,bg, i,j,j2,k2=0,k3=0,x,y,x0,y0,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
 
-    if( !g.va || !g.na || !g.ca ) {
+    if( !g.va || !g.na || !g.ta ) {
       g.va = new Float32Array(glBufSize*9);
       g.na = new Float32Array(glBufSize*9);
-      g.ca = new Float32Array(glBufSize*3);
+      g.ta = new Float32Array(glBufSize*3);
     }
 
-    function vncPush(v,n,c) {
-      g.ca[k/3]=c;
-      g.ca[k/3+1]=c;
-      g.ca[k/3+2]=c;
+    function vntPush(v,n,t,tid) {
+      var xfac=1/16;
       for(var i=0;i<9;++i) {
-        g.va[k]=v[i];
-        g.na[k++]=n[i];
+        g.va[k3]=v[i];
+        g.na[k3++]=n[i];
+      }
+      for(var i=0;i<6;i+=2) {
+        g.ta[k2++]=xfac*(t[i]+tid); // 10x1 textures in atlas
+        g.ta[k2++]=t[i+1];
       }
     }
 
@@ -112,38 +114,38 @@ function Spindizzy() {
           for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
             j2=(j+1)%4;
             // insert two triangles for each side
-            vncPush([x0+base[j][0],z0,y0+base[j][1], x0+base[j2][0],z0,y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
-                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],1);
-            vncPush([x0+base[j2][0],z0,y0+base[j2][1], x0+base[j2][0],z+bg.h[j2],y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
-                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],1);
+            vntPush([x0+base[j][0],z0,y0+base[j][1], x0+base[j2][0],z0,y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
+                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0.5*(1-a[2]-bg.h[j])],3);
+            vntPush([x0+base[j2][0],z0,y0+base[j2][1], x0+base[j2][0],z+bg.h[j2],y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
+                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0.5*(1-a[2]-bg.h[j2]), 0,0.5*(1-a[2]-bg.h[j]) ],3);
           }
           // insert two triangles for the top surface
           if( bg.s!=2 ) {
-            vncPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1] ],
-                    [0,1,0,0,1,0,0,1,0],2);
-            vncPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
-                    [0,1,0,0,1,0,0,1,0],3);
+            vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1] ],
+                    [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],1);
+            vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+                    [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],1);
           } else {
-            vncPush([ x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
-                    [0,1,0,0,1,0,0,1,0],4);
-            vncPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
-                    [0,1,0,0,1,0,0,1,0],15);
+            vntPush([ x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+                    [0,1,0,0,1,0,0,1,0],[1,0,1,1,0,1],5);
+            vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+                    [0,1,0,0,1,0,0,1,0],[0,0,1,0,0,1],5);
           }
         }
       }
     }
-    g.numTri = k/3;
+    g.numTri = k3/3;
 
     g.vb =  gl.createBuffer();
     g.nb =  gl.createBuffer();
-    g.cb =  gl.createBuffer();
+    g.tb =  gl.createBuffer();
   
     gl.bindBuffer(gl.ARRAY_BUFFER, g.vb );
     gl.bufferData( gl.ARRAY_BUFFER, g.va, gl.STATIC_DRAW );
     gl.bindBuffer(gl.ARRAY_BUFFER, g.nb );
     gl.bufferData( gl.ARRAY_BUFFER, g.na, gl.STATIC_DRAW );
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.cb );
-    gl.bufferData( gl.ARRAY_BUFFER, g.ca, gl.STATIC_DRAW );
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.tb );
+    gl.bufferData( gl.ARRAY_BUFFER, g.ta, gl.STATIC_DRAW );
   }
 
   // 16 color palette (last color is random)
@@ -191,12 +193,12 @@ function Spindizzy() {
     gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, g.vb );
     gl.vertexAttribPointer(g.program.vertexPosAttrib, 3, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, g.cb );
-    gl.vertexAttribPointer(g.program.colIdxAttrib, 1, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.tb );
+    gl.vertexAttribPointer(g.program.textureAttrib, 2, gl.FLOAT, false, 0, 0);
 
     gl.drawArrays( gl.TRIANGLES, 0, g.numTri );
 
-    rot+=0.01;
+    rot+=0.02;
     requestAnimFrame(draw);
     updateProjection();
     updatePalette();
@@ -259,13 +261,15 @@ function Spindizzy() {
     g.program.normalPosAttrib = gl.getAttribLocation(g.program, 'norm');
     gl.enableVertexAttribArray(g.program.normalPosAttrib);
 
-    g.program.colIdxAttrib = gl.getAttribLocation(g.program, 'cidx');
-    gl.enableVertexAttribArray(g.program.colIdxAttrib);
+    g.program.textureAttrib = gl.getAttribLocation(g.program, 'tex');
+    gl.enableVertexAttribArray(g.program.textureAttrib);
 
     g.u_mvp      = gl.getUniformLocation(g.program, "u_mvp"),
     g.u_lightdir = gl.getUniformLocation(g.program, "u_lightdir"),
     g.u_palette  = gl.getUniformLocation(g.program, "u_palette");
     
+    gl.uniform1i(gl.getUniformLocation(g.program, "u_sampler"), 0);
+
     updatePalette();
     updateProjection();
 
@@ -278,6 +282,22 @@ function Spindizzy() {
     gl.enable(gl.CULL_FACE);
     //gl.cullFace(gl.FRONT);
     gl.cullFace(gl.BACK);
+    
+    // load texture atlas
+    var tex = gl.createTexture();
+    texImage = new Image();
+    texImage.onload = function() { handleTextureLoaded(texImage, tex); }
+    texImage.src = "image/texture.png";
+
+    function handleTextureLoaded(image, texture) {
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+      gl.generateMipmap(gl.TEXTURE_2D);
+    }
   }
 
   Install();
