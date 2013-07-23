@@ -323,8 +323,8 @@ function Spindizzy() {
     g.e=[{x:0,y:0,z:0}];
 
     // build movable entities
-    var i,l1=.25,l2=1.5,l3=0.5,l4=0.025,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2;
-    for( i=1; i<2; ++i ) {
+    var i,l1=.25,l2=1.5,l3=0.5,l4=0.025,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2,l5=0.001;
+    for( i=1; i<4; ++i ) {
       g.e[i]={x:3,y:0,z:3};
       g.e[i].vb =  gl.createBuffer();
       g.e[i].nb =  gl.createBuffer();
@@ -333,23 +333,28 @@ function Spindizzy() {
 
       switch(i) {
         case 1: // player
-            // top
-            vntPush([ -l1,l2,-l1, l1,l2,-l1, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],13);
-            vntPush([ -l1,l2,-l1, l1,l2,l1, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],13);
-            // bottom
-            vntPush([ -l1,l2,-l1, 0,l3,0, l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,0,.5,.5,1,0],12);
-            vntPush([ l1,l2,-l1, 0,l3,0, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,0,.5,.5,1,1],12);
-            vntPush([ l1,l2,l1, 0,l3,0, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,1,.5,.5,0,1],12);
-            vntPush([ -l1,l2,l1, 0,l3,0, -l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,1,.5,.5,0,0],12);
-            // stem
-            for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
-              j2=(j+1)%4;
-              // insert two triangles for each side
-              vntPush([l4*base[j][0],0,l4*base[j][1], l4*base[j2][0],0,l4*base[j2][1], l4*base[j][0],(l1+l2)/2,l4*base[j][1]], 
-                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0],14);
-              vntPush([l4*base[j2][0],0,l4*base[j2][1], l4*base[j2][0],(l1+l2)/2,l4*base[j2][1], l4*base[j][0],(l1+l2)/2,l4*base[j][1]], 
-                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0, 0,0 ],14);
-            }
+          // top
+          vntPush([ -l1,l2,-l1, l1,l2,-l1, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],13);
+          vntPush([ -l1,l2,-l1, l1,l2,l1, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],13);
+          // bottom
+          vntPush([ -l1,l2,-l1, 0,l3,0, l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,0,.5,.5,1,0],12);
+          vntPush([ l1,l2,-l1, 0,l3,0, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,0,.5,.5,1,1],12);
+          vntPush([ l1,l2,l1, 0,l3,0, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,1,.5,.5,0,1],12);
+          vntPush([ -l1,l2,l1, 0,l3,0, -l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,1,.5,.5,0,0],12);
+          // stem
+          for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
+            j2=(j+1)%4;
+            // insert two triangles for each side
+            vntPush([l4*base[j][0],0,l4*base[j][1], l4*base[j2][0],0,l4*base[j2][1], l4*base[j][0],(l1+l2)/2,l4*base[j][1]], 
+                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0],14);
+            vntPush([l4*base[j2][0],0,l4*base[j2][1], l4*base[j2][0],(l1+l2)/2,l4*base[j2][1], l4*base[j][0],(l1+l2)/2,l4*base[j][1]], 
+                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0, 0,0 ],14);
+          }
+          break;
+        case 2: // lift1
+        case 3: // lift2
+          vntPush([ 0,l5,0, 1,l5,0, 1,l5,1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],i+7);
+          vntPush([ 0,l5,0, 1,l5,1, 0,l5,1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],i+7);
           break;
       }
 
