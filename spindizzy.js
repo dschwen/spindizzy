@@ -11,7 +11,7 @@ function Spindizzy() {
   //   1 = split along NS axis
   //   2 = split along EW axis
   //
-  var bsd = [
+  var bgeo = [
     { h:[0,0,0,0],s:0 }, //  0 flat floor
     { h:[1,1,0,0],s:0 }, //  1 shallow ramp NE
     { h:[0,1,1,0],s:0 }, //  2 shallow ramp ES
@@ -36,7 +36,7 @@ function Spindizzy() {
 
   // Test-level
   var level1 = {
-    // bocktable [bsd_id,z,base_depth]
+    // bocktable [bgeo_id,z,base_depth]
     bt: [ [0,0,1],[0,1,2] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
@@ -79,14 +79,36 @@ function Spindizzy() {
   function triLevel(l) {
     if( !('b'in l) ) prepareLevel(l);
 
-    var t=[], // triangle data
-        c, i,x,y, ;
+    var a,c, i,j,j2,k=0,x,y,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
+
+    if( !g.va || !g.na ) {
+      g.va = new Float32Array(glBufSize*9);
+      g.na = new Float32Array(glBufSize*9);
+    }
+
+    function vnPush(v,n) {
+      for(var i=0;i<9;++i) {
+        g.va[k]=v[i];
+        g.na[k++]=n[i];
+      }
+    }
 
     for(x=0;x<sx;++x) {
       for(y=0;y<sy;++y) {
         c=l.b[x][y];
         for(i=0;i<c.length;++i) {
-
+          if(c[i]<0) continue;
+          a=l.bt[c[i]]; // block table entry
+          z=a[1];       // surface level
+          z0=z-a[2];    // bottom end of base
+          g=bgeo[a[0]]; // block geometry descriptor
+          for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
+            j2=(j+1)%4;
+            // insert two triangles for each side
+            vnPush([x+base[j][0],z0,y+base[j][1], x+base[j2][0],z0,y+base[j2][1], x+base[j][0],z+g.h[j],y+base[j][1]], [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]]);
+            vnPush([x+base[j2][0],z0,y+base[j2][1], x+base[j2][0],z+g.h[j2],y+base[j2][1], x+base[j][0],z+g.h[j],y+base[j][1]], [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]]);
+          }
+          // insert two triangles for the top surface
         }
     }
   }
