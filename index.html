@@ -44,7 +44,7 @@
 <script id="block-vs" type="x-shader/x-vertex">
   attribute vec3 pos;
   attribute vec3 norm;
-  attribute int cidx;
+  attribute float cidx;
 
   uniform mat4 u_mvp;
   uniform vec3 u_lightdir;
@@ -54,7 +54,8 @@
   
   void main() {
     gl_Position = u_mvp * vec4(pos,1.0);
-    color = u_palette[cidx] * dot(norm,u_lightdir)*0.25+0.75;
+    color = u_palette[int(cidx)] * dot( u_mvp * vec4(norm,1.0),vec4(u_lightdir,0.0))*0.5+0.5;
+    //color = u_palette[int(cidx)] * dot( u_mvp * vec4(norm,1.0),u_lightdir)*0.25+0.75;
   }
 </script>
 <script id="block-fs" type="x-shader/x-fragment">
@@ -63,7 +64,7 @@
   varying vec3 color;
 
   void main() {
-    gl_FragColor = color;
+    gl_FragColor = vec4(color,1.0);
   }
 </script>
 <script src="spindizzy.js" type="text/javascript"></script>

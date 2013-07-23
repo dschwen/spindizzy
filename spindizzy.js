@@ -47,7 +47,7 @@ function Spindizzy() {
       this.b = b; // final level data stored in b
     },
     // x,y,bt_id level data to be added to the procedurally initialized level
-    data: [[4,4,2]],
+    data: [], //[[4,4,2]],
     // procedural post processing
     post: function() {
     }
@@ -58,15 +58,16 @@ function Spindizzy() {
     var x,y,i;
 
     // initialize level
+    l.b=[];
     for(x=0;x<sx;++x) {
-      l.b[x]=[]; for(y=0;y<sy;++y) b[x][y]=[]; 
+      l.b[x]=[]; for(y=0;y<sy;++y) l.b[x][y]=[]; 
     }
 
     // pre process
     if( ('pre' in l) && (typeof l.pre == 'function') ) l.pre();
 
     // insert data
-    for(i=0; i<l.data.length; ++i) b[l.data[i][0]][l.data[i][1]].push(l.data[i][2]);
+    for(i=0; i<l.data.length; ++i) l.b[l.data[i][0]][l.data[i][1]].push(l.data[i][2]);
 
     // post process
     if( ('post' in l) && (typeof l.post == 'function') ) l.post();
@@ -79,14 +80,18 @@ function Spindizzy() {
   function triLevel(l) {
     if( !('b'in l) ) prepareLevel(l);
 
-    var a,c, i,j,j2,k=0,x,y,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
+    var a,c,bg, i,j,j2,k=0,x,y,z,z0, glBufSize=6000,base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
 
-    if( !g.va || !g.na ) {
+    if( !g.va || !g.na || !g.ca ) {
       g.va = new Float32Array(glBufSize*9);
       g.na = new Float32Array(glBufSize*9);
+      g.ca = new Float32Array(glBufSize*3);
     }
 
-    function vnPush(v,n) {
+    function vncPush(v,n,c) {
+      g.ca[k/3]=c;
+      g.ca[k/3+1]=c;
+      g.ca[k/3+2]=c;
       for(var i=0;i<9;++i) {
         g.va[k]=v[i];
         g.na[k++]=n[i];
@@ -101,16 +106,31 @@ function Spindizzy() {
           a=l.bt[c[i]]; // block table entry
           z=a[1];       // surface level
           z0=z-a[2];    // bottom end of base
-          g=bgeo[a[0]]; // block geometry descriptor
+          bg=bgeo[a[0]]; // block geometry descriptor
           for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
             j2=(j+1)%4;
             // insert two triangles for each side
-            vnPush([x+base[j][0],z0,y+base[j][1], x+base[j2][0],z0,y+base[j2][1], x+base[j][0],z+g.h[j],y+base[j][1]], [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]]);
-            vnPush([x+base[j2][0],z0,y+base[j2][1], x+base[j2][0],z+g.h[j2],y+base[j2][1], x+base[j][0],z+g.h[j],y+base[j][1]], [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]]);
+            vncPush([x+base[j][0],z0,y+base[j][1], x+base[j2][0],z0,y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
+                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],1);
+            vncPush([x+base[j2][0],z0,y+base[j2][1], x+base[j2][0],z+bg.h[j2],y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
+                    [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],2);
           }
           // insert two triangles for the top surface
         }
+      }
     }
+    g.numTri = k/3;
+
+    g.vb =  gl.createBuffer();
+    g.nb =  gl.createBuffer();
+    g.cb =  gl.createBuffer();
+  
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.vb );
+    gl.bufferData( gl.ARRAY_BUFFER, g.va, gl.STATIC_DRAW );
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.nb );
+    gl.bufferData( gl.ARRAY_BUFFER, g.na, gl.STATIC_DRAW );
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.cb );
+    gl.bufferData( gl.ARRAY_BUFFER, g.ca, gl.STATIC_DRAW );
   }
 
   // 16 color palette (last color is random)
@@ -123,7 +143,7 @@ function Spindizzy() {
     gl.uniform3fv(g.u_palette, palette);
   }
 
-  var rot=0, targetRot=0, mat=[], xangle=0.2;
+  var cw,ch,rot=Math.PI/4, targetRot=0, mat=[], xangle=-Math.PI/6;
   var r2=[1,0,0,0,0,Math.cos(xangle),Math.sin(xangle),0,0,-Math.sin(xangle),Math.cos(xangle),0,0,0,0,1];
   function updateProjection() {
     var sx,sy,sz=0.1,s=Math.sin(rot),c=Math.cos(rot);
@@ -145,7 +165,7 @@ function Spindizzy() {
       }
       return m;
     }
-    mat = mul(mul(r1,r2),s1);
+    mat = mul(mul(r2,r1),s1);
     gl.uniformMatrix4fv(g.u_mvp, false, new Float32Array(mat));
   }
 
@@ -153,7 +173,19 @@ function Spindizzy() {
     // clear and render
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
-    //wmajt.renderWebGLBuildingData();
+    // bind buffers
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.nb );
+    gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.vb );
+    gl.vertexAttribPointer(g.program.vertexPosAttrib, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.cb );
+    gl.vertexAttribPointer(g.program.colIdxAttrib, 1, gl.FLOAT, false, 0, 0);
+
+    gl.drawArrays( gl.TRIANGLES, 0, g.numTri );
+
+    rot+=0.01;
+    setTimeout(draw,22);
+    updateProjection();
   }
 
   //
@@ -166,6 +198,10 @@ function Spindizzy() {
     if( !hasCanvas ) return;
 
     var c = document.getElementById('gamecanvas');
+    cw=c.clientWidth;
+    ch=c.clientHeight;
+    c.width=cw;
+    c.height=ch;
     gl = c.getContext("experimental-webgl");
 
     // initialize building webgl module
@@ -177,31 +213,35 @@ function Spindizzy() {
     gl.clear( gl.COLOR_BUFFER_BIT + gl.DEPTH_BUFFER_BIT );
 
     // compile shaders
-    var g.program = gl.createProgram();
+    g.program = gl.createProgram();
     
     function initShader(id, type) {
       var shader = gl.createShader(type);
       gl.shaderSource(shader, document.getElementById(id).text );
       gl.compileShader(shader);
       gl.attachShader(g.program, shader);
+      console.log(id, gl.getShaderInfoLog(shader) );
       return shader; 
     }
 
-    var vshader = initShader('bldg-vs',gl.VERTEX_SHADER),
-        fshader = initShader('bldg-fs',gl.FRAGMENT_SHADER);
+    var vshader = initShader('block-vs',gl.VERTEX_SHADER),
+        fshader = initShader('block-fs',gl.FRAGMENT_SHADER);
     
     gl.linkProgram(g.program);
     gl.useProgram(g.program);
 
-    g.program.vertexPosAttrib = gl.getAttribLocation(program, 'pos');
-    gl.enableVertexAttribArray(program.vertexPosAttrib);
+    g.program.vertexPosAttrib = gl.getAttribLocation(g.program, 'pos');
+    gl.enableVertexAttribArray(g.program.vertexPosAttrib);
 
-    g.program.normalPosAttrib = gl.getAttribLocation(program, 'norm');
-    gl.enableVertexAttribArray(program.normalPosAttrib);
+    g.program.normalPosAttrib = gl.getAttribLocation(g.program, 'norm');
+    gl.enableVertexAttribArray(g.program.normalPosAttrib);
 
-    g.u_mvp      = gl.getUniformLocation(program, "u_mvp"),
-    g.u_lightdir = gl.getUniformLocation(program, "u_lightdir"),
-    g.u_palette  = gl.getUniformLocation(program, "u_palette");
+    g.program.colIdxAttrib = gl.getAttribLocation(g.program, 'cidx');
+    gl.enableVertexAttribArray(g.program.colIdxAttrib);
+
+    g.u_mvp      = gl.getUniformLocation(g.program, "u_mvp"),
+    g.u_lightdir = gl.getUniformLocation(g.program, "u_lightdir"),
+    g.u_palette  = gl.getUniformLocation(g.program, "u_palette");
     
     updatePalette();
     updateProjection();
@@ -212,7 +252,12 @@ function Spindizzy() {
 
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
   }
 
   Install();
+
+  triLevel(level1);
+  draw();
 }
