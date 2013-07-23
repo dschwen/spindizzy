@@ -15,38 +15,13 @@
     gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);
   }
 </script>
-<script id="shader-vs" type="x-shader/x-vertex">
-  attribute vec3 aVertexPosition;
-  attribute vec3 aVertexNormal;
-  attribute vec2 aTextureCoord;
-
-  uniform mat4 uMVMatrix;
-  uniform mat4 uPMatrix;
-  uniform mat3 uNMatrix;
-
-  uniform vec3 uAmbientColor;
-
-  uniform vec3 uLightingDirection;
-  uniform vec3 uDirectionalColor;
-
-  varying vec2 vTextureCoord;
-  varying vec3 vLightWeighting;
-
-  void main(void) {
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-    vTextureCoord = aTextureCoord;
-
-    vec3 transformedNormal = uNMatrix * aVertexNormal;
-    float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
-    vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
-  }
-</script>
 <script id="block-vs" type="x-shader/x-vertex">
   attribute vec3 pos;
   attribute vec3 norm;
   attribute vec2 tex;
 
   uniform mat4 u_mvp;
+  uniform vec3 u_shift;
   uniform vec3 u_lightdir;
   uniform vec3 u_palette[16];
   
@@ -54,7 +29,7 @@
   varying float light;
   
   void main() {
-    gl_Position = u_mvp * vec4(pos,1.0);
+    gl_Position = u_mvp * vec4(pos+u_shift,1.0);
     light = (dot( vec4(norm,1.0),vec4(u_lightdir,0.0))*0.25+0.75);
     vtex = tex;
   }

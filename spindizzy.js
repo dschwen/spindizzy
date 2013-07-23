@@ -86,32 +86,30 @@ function Spindizzy() {
   }
 
   // WebGL context
-  var gl, g={};
+  var gl, g={}, k2, k3;
+
+  function vntPush(v,n,t,tid) {
+    var xfac=1/32;
+    for(var i=0;i<9;++i) {
+      g.va[k3]=v[i];
+      g.na[k3++]=n[i];
+    }
+    for(var i=0;i<6;i+=2) {
+      g.ta[k2++]=xfac*(t[i]+tid); // 10x1 textures in atlas
+      g.ta[k2++]=t[i+1];
+    }
+  }
 
   // build the triangle and normal buffers for the level l
   function triLevel(l) {
     if( !('b'in l) ) prepareLevel(l);
 
-    var a,c,bg, i,j,j2,k2=0,k3=0,x,y,x0,y0,z,z0, base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
-
-
-    function vntPush(v,n,t,tid) {
-      var xfac=1/32;
-      for(var i=0;i<9;++i) {
-        g.va[k3]=v[i];
-        g.na[k3++]=n[i];
-      }
-      for(var i=0;i<6;i+=2) {
-        g.ta[k2++]=xfac*(t[i]+tid); // 10x1 textures in atlas
-        g.ta[k2++]=t[i+1];
-      }
-    }
+    var a,c,bg, i,j,j2,x,y,x0,y0,z,z0, base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
+    k2=0; k3=0;
 
     for(x=0;x<sx;++x) {
-      x0=x-4.0;
       for(y=0;y<sy;++y) {
         c=l.b[x][y];
-        y0=y-4.0;
         for(i=0;i<c.length;++i) {
           if(c[i]<0) continue;
           a=l.bt[c[i]]; // block table entry
@@ -122,22 +120,22 @@ function Spindizzy() {
             j2=(j+1)%4;
             // insert two triangles for each side
             if( a[2]!=0 || bg.h[j]!=0 || bg.h[j2]!=0 ) {
-              vntPush([x0+base[j][0],z0,y0+base[j][1], x0+base[j2][0],z0,y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
+              vntPush([x+base[j][0],z0,y+base[j][1], x+base[j2][0],z0,y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
                       [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0.5*(1-a[2]-bg.h[j])],3);
-              vntPush([x0+base[j2][0],z0,y0+base[j2][1], x0+base[j2][0],z+bg.h[j2],y0+base[j2][1], x0+base[j][0],z+bg.h[j],y0+base[j][1]], 
+              vntPush([x+base[j2][0],z0,y+base[j2][1], x+base[j2][0],z+bg.h[j2],y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
                       [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0.5*(1-a[2]-bg.h[j2]), 0,0.5*(1-a[2]-bg.h[j]) ],3);
             }
           }
           // insert two triangles for the top surface
           if( bg.s!=2 ) {
-            vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1] ],
+            vntPush([ x+base[0][0],z+bg.h[0],y+base[0][1], x+base[1][0],z+bg.h[1],y+base[1][1], x+base[2][0],z+bg.h[2],y+base[2][1] ],
                     [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],bg.t);
-            vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+            vntPush([ x+base[0][0],z+bg.h[0],y+base[0][1], x+base[2][0],z+bg.h[2],y+base[2][1], x+base[3][0],z+bg.h[3],y+base[3][1] ],
                     [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],bg.t);
           } else {
-            vntPush([ x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[2][0],z+bg.h[2],y0+base[2][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+            vntPush([ x+base[1][0],z+bg.h[1],y+base[1][1], x+base[2][0],z+bg.h[2],y+base[2][1], x+base[3][0],z+bg.h[3],y+base[3][1] ],
                     [0,1,0,0,1,0,0,1,0],[1,0,1,1,0,1],bg.t);
-            vntPush([ x0+base[0][0],z+bg.h[0],y0+base[0][1], x0+base[1][0],z+bg.h[1],y0+base[1][1], x0+base[3][0],z+bg.h[3],y0+base[3][1] ],
+            vntPush([ x+base[0][0],z+bg.h[0],y+base[0][1], x+base[1][0],z+bg.h[1],y+base[1][1], x+base[3][0],z+bg.h[3],y+base[3][1] ],
                     [0,1,0,0,1,0,0,1,0],[0,0,1,0,0,1],bg.t);
           }
         }
@@ -198,7 +196,7 @@ function Spindizzy() {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
     var i;
-    for(i=0;i<1;++i) {
+    for(i=0;i<2;++i) {
       // bind buffers
       gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].nb );
       gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
@@ -206,6 +204,9 @@ function Spindizzy() {
       gl.vertexAttribPointer(g.program.vertexPosAttrib, 3, gl.FLOAT, false, 0, 0);
       gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].tb );
       gl.vertexAttribPointer(g.program.textureAttrib, 2, gl.FLOAT, false, 0, 0);
+
+      // entity shift
+      gl.uniform3f(g.u_shift, g.e[i].x-4, g.e[i].y, g.e[i].z-4 );
 
       // draw call
       gl.drawArrays( gl.TRIANGLES, 0, g.e[i].numTri );
@@ -277,6 +278,7 @@ function Spindizzy() {
     gl.enableVertexAttribArray(g.program.textureAttrib);
 
     g.u_mvp      = gl.getUniformLocation(g.program, "u_mvp"),
+    g.u_shift    = gl.getUniformLocation(g.program, "u_shift"),
     g.u_lightdir = gl.getUniformLocation(g.program, "u_lightdir"),
     g.u_palette  = gl.getUniformLocation(g.program, "u_palette");
     
@@ -317,12 +319,49 @@ function Spindizzy() {
     g.na = new Float32Array(glBufSize*9);
     g.ta = new Float32Array(glBufSize*3);
 
+    // entity list (stage is e[0])
+    g.e=[{x:0,y:0,z:0}];
+
     // build movable entities
-    g.e=[{}];
-    g.e[1]={};
-    g.e[1].vb =  gl.createBuffer();
-    g.e[1].nb =  gl.createBuffer();
-    g.e[1].tb =  gl.createBuffer();
+    var i,l1=.25,l2=1.5,l3=0.5,l4=0.025,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2;
+    for( i=1; i<2; ++i ) {
+      g.e[i]={x:3,y:0,z:3};
+      g.e[i].vb =  gl.createBuffer();
+      g.e[i].nb =  gl.createBuffer();
+      g.e[i].tb =  gl.createBuffer();
+      k2=0; k3=0;
+
+      switch(i) {
+        case 1: // player
+            // top
+            vntPush([ -l1,l2,-l1, l1,l2,-l1, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],13);
+            vntPush([ -l1,l2,-l1, l1,l2,l1, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],13);
+            // bottom
+            vntPush([ -l1,l2,-l1, 0,l3,0, l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,0,.5,.5,1,0],12);
+            vntPush([ l1,l2,-l1, 0,l3,0, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,0,.5,.5,1,1],12);
+            vntPush([ l1,l2,l1, 0,l3,0, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,1,.5,.5,0,1],12);
+            vntPush([ -l1,l2,l1, 0,l3,0, -l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,1,.5,.5,0,0],12);
+            // stem
+            for(j=0;j<4;++j) { // loop over 4 edges NE ES SW WN
+              j2=(j+1)%4;
+              // insert two triangles for each side
+              vntPush([l4*base[j][0],0,l4*base[j][1], l4*base[j2][0],0,l4*base[j2][1], l4*base[j][0],(l1+l2)/2,l4*base[j][1]], 
+                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0],14);
+              vntPush([l4*base[j2][0],0,l4*base[j2][1], l4*base[j2][0],(l1+l2)/2,l4*base[j2][1], l4*base[j][0],(l1+l2)/2,l4*base[j][1]], 
+                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0, 0,0 ],14);
+            }
+          break;
+      }
+
+      g.e[i].numTri = k3/3;
+  
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[1].vb );
+      gl.bufferData( gl.ARRAY_BUFFER, g.va, gl.STATIC_DRAW );
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[1].nb );
+      gl.bufferData( gl.ARRAY_BUFFER, g.na, gl.STATIC_DRAW );
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[1].tb );
+      gl.bufferData( gl.ARRAY_BUFFER, g.ta, gl.STATIC_DRAW );
+    }
   }
 
   Install();
