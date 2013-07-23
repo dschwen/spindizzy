@@ -197,7 +197,7 @@ function Spindizzy() {
     gl.drawArrays( gl.TRIANGLES, 0, g.numTri );
 
     rot+=0.01;
-    setTimeout(draw,22);
+    requestAnimFrame(draw);
     updateProjection();
     updatePalette();
   }
@@ -210,6 +210,15 @@ function Spindizzy() {
     var hasCanvas = "HTMLCanvasElement" in window;
 
     if( !hasCanvas ) return;
+
+    window.requestAnimFrame = (function(){
+        return  window.requestAnimationFrame       ||
+                window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame    ||
+                function( callback ){
+                   window.setTimeout(callback, 1000 / 60);
+                };
+    })();
 
     var c = document.getElementById('gamecanvas');
     cw=c.clientWidth;
