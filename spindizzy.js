@@ -37,7 +37,12 @@ function Spindizzy() {
     { h:[0,0,0,0],s:0,t:15 },// 22 arrow NE
     { h:[0,0,0,0],s:0,t:16 },// 23 arrow ES
     { h:[0,0,0,0],s:0,t:17 },// 24 arrow SW
-    { h:[0,0,0,0],s:0,t:18 } // 25 arrow WN
+    { h:[0,0,0,0],s:0,t:18 },// 25 arrow WN
+    { h:[1,0,0,0],s:2,t:5 }, // 26 banked corner N
+    { h:[0,1,0,0],s:1,t:4 }, // 27 banked corner E
+    { h:[0,0,1,0],s:2,t:5 }, // 28 banked corner S
+    { h:[0,0,0,1],s:1,t:4 }, // 29 banked corner W
+    { h:[0,0,0,0],s:1,t:19 } // 30 ice
   ];
 
   // Stage size
@@ -46,7 +51,8 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
+    bt: [ [0,0,0],[0,1,2],[1,0,0],[22,0,1] ], 
+    //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
       var x,y,b = [];
@@ -193,10 +199,14 @@ function Spindizzy() {
 
   var Player = {
     direction: [0,0],
-    velocity:  [0,0]
+    velocity:  [0,0],
+    onIce: false,
+    onGround: true,
+    onLift: 0,
+    lx:-1,ly:-1,li:-1 // last block below player
   };
 
-  function gameLoop() {
+  function draw() {
     // clear and render
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
@@ -223,7 +233,12 @@ function Spindizzy() {
       // draw call
       gl.drawArrays( gl.TRIANGLES, 0, g.e[i].numTri );
     }
-    
+  }
+
+  function gameLoop() {
+    // draw stage and entities
+    draw();
+
     // request next gameLoop invocation at constant frame rate
     requestAnimFrame(gameLoop);
 
@@ -232,17 +247,84 @@ function Spindizzy() {
 
     // accelerate the Player
     var drag = 0.995;
-    Player.velocity[0] = drag*( Player.velocity[0] + 0.001*Player.direction[0] );
-    Player.velocity[1] = drag*( Player.velocity[1] + 0.001*Player.direction[1] );
+    if(!Player.onIce) {
+      Player.velocity[0] = drag*( Player.velocity[0] + 0.001*Player.direction[0] );
+      Player.velocity[1] = drag*( Player.velocity[1] + 0.001*Player.direction[1] );
+    }
+
+    // get level data
+    var l=level1, b=l.b, t=l.bt;
 
     // move the Player
     var dt = 1.0;
     g.e[1].x += dt*Player.velocity[0];
     g.e[1].z += dt*Player.velocity[1];
 
+    function floorHeight(ct,dx,dy) {
+      var z = ct[1], g=bgeo[ct[0]];
+      if(g.s!=2) {
+        if(dx-dy>0) { // upper triangle
+          return z + g.h[1] + (g.h[0]-g.h[1])*(1-dx) + (g.h[2]-g.h[1])*dy;
+        } else {      // lower triangle
+          return z + g.h[3] + (g.h[2]-g.h[3])*dx + (g.h[0]-g.h[3])*(1-dy);
+        }
+      } else {
+        if(dx+dy<1) { // upper triangle
+          return z + g.h[0] + (g.h[1]-g.h[0])*dx + (g.h[3]-g.h[0])*dy;
+        } else {      // lower triangle
+          return z + g.h[2] + (g.h[3]-g.h[2])*(1-dx) + (g.h[1]-g.h[2])*(1-dy);
+        }
+      }
+    }
+
+    // player tile and in-tile position
+    var x=Math.floor(g.e[1].x),
+        y=Math.floor(g.e[1].z),
+        z=g.e[1].y;
+        dx=g.e[1].x-x,
+        dy=g.e[1].z-y;
+
+    // moved to a new tile?
+    if( x!=Player.lx || y!=Player.ly ) {
+      // left map?
+      if( x<0 || x>=sx || y<0 || y>=sy ) {
+        if( x<0 || x>=sx ) Player.velocity[0] *= -1;
+        if( y<0 || y>=sy ) Player.velocity[1] *= -1;
+        return;
+      }
+
+      var cb=b[x][y], maxUp = 0.1;
+
+      // find new block below player
+      Player.onGround = false;
+      if(cb.length==0) {
+        Player.li = -1;
+      } else {
+        var i;
+        for(i=0; i<cb.length; ++i) {
+          // tile is up too high
+          if(t[cb[i]][1]-maxUp>z) continue;
+
+          // check exact floor height
+          if(floorHeight(t[cb[i]],dx,dy)-maxUp>z) continue;
+
+          // select tile
+          Player.li = i;
+        }
+
+        Player.lx = x;
+        Player.ly = y;
+      } 
+    }
+
+    // current blocktable item
+    var ct = cb=b[x][y][Player.li]; // TODO li may be -1
+
+    // get floor height at player position
+    
+
     // collision test
 
-    // adapt player height and set vertical momentum
 
     if( rot!=targetRot ) {
       rot += rot<targetRot ? 0.1 : -0.1;
