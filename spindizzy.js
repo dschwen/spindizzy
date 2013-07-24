@@ -25,7 +25,7 @@ function Spindizzy() {
     { h:[0,1,0,0],s:2,t:5 }, // 10 shallow gable E
     { h:[0,0,1,0],s:1,t:4 }, // 11 shallow gable S
     { h:[0,0,0,1],s:2,t:5 }, // 12 shallow gable W
-    { h:[2,0,0,0],s:1,t:5 }, // 13 steep gable N
+    { h:[2,0,0,0],s:1,t:4 }, // 13 steep gable N
     { h:[0,2,0,0],s:2,t:5 }, // 14 steep gable E
     { h:[0,0,2,0],s:1,t:4 }, // 15 steep gable S
     { h:[0,0,0,2],s:2,t:5 }, // 16 steep gable W
@@ -51,7 +51,7 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[1,0,0],[22,0,1] ], 
+    bt: [ [0,0,0],[0,1,2],[14,0,0],[22,0,1] ], 
     //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
@@ -62,12 +62,13 @@ function Spindizzy() {
       this.b = b; // final level data stored in b
     },
     // x,y,bt_id level data to be added to the procedurally initialized level
-    data: [[4,4,2]],
+    data: [],// [[4,4,2]],
     // procedural post processing
     post: function() {
       var b=this.b;
       b[3][0][0]=3;
       b[4][0][0]=3;
+      b[4][4][0]=2;
     }
   };
 
@@ -318,10 +319,10 @@ function Spindizzy() {
     }
 
     // current blocktable item
-    var ct = cb=b[x][y][Player.li]; // TODO li may be -1
+    var ct = t[b[x][y][Player.li]]; // TODO li may be -1
 
     // get floor height at player position
-    
+    g.e[1].y = floorHeight(ct,dx,dy); 
 
     // collision test
 
