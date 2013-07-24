@@ -196,7 +196,7 @@ function Spindizzy() {
     velocity:  [0,0]
   };
 
-  function draw() {
+  function gameLoop() {
     // clear and render
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
@@ -224,15 +224,25 @@ function Spindizzy() {
       gl.drawArrays( gl.TRIANGLES, 0, g.e[i].numTri );
     }
     
-    // request next draw call
-    requestAnimFrame(draw);
+    // request next gameLoop invocation at constant frame rate
+    requestAnimFrame(gameLoop);
 
     // rotate the Player
     g.e[1].phi-=0.1;
 
+    // accelerate the Player
+    var drag = 0.995;
+    Player.velocity[0] = drag*( Player.velocity[0] + 0.001*Player.direction[0] );
+    Player.velocity[1] = drag*( Player.velocity[1] + 0.001*Player.direction[1] );
+
     // move the Player
-    g.e[1].x += 0.1*Player.direction[0];
-    g.e[1].z += 0.1*Player.direction[1];
+    var dt = 1.0;
+    g.e[1].x += dt*Player.velocity[0];
+    g.e[1].z += dt*Player.velocity[1];
+
+    // collision test
+
+    // adapt player height and set vertical momentum
 
     if( rot!=targetRot ) {
       rot += rot<targetRot ? 0.1 : -0.1;
@@ -456,8 +466,8 @@ function Spindizzy() {
     // load level
     triLevel(level1);
 
-    // setup draw loop
-    draw();
+    // enter game loop
+    gameLoop();
 
   }
 
