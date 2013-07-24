@@ -2,25 +2,13 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<script id="shader-fs" type="x-shader/x-fragment">
-  precision mediump float;
-
-  varying vec2 vTextureCoord;
-  varying vec3 vLightWeighting;
-
-  uniform sampler2D uSampler;
-
-  void main(void) {
-    vec4 textureColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
-    gl_FragColor = vec4(textureColor.rgb * vLightWeighting, textureColor.a);
-  }
-</script>
 <script id="block-vs" type="x-shader/x-vertex">
   attribute vec3 pos;
   attribute vec3 norm;
   attribute vec2 tex;
 
   uniform mat4 u_mvp;
+  uniform vec2 u_rot;
   uniform vec3 u_shift;
   uniform vec3 u_lightdir;
   uniform vec3 u_palette[16];
@@ -29,8 +17,8 @@
   varying float light;
   
   void main() {
-    gl_Position = u_mvp * vec4(pos+u_shift,1.0);
-    light = (dot( vec4(norm,1.0),vec4(u_lightdir,0.0))*0.25+0.75);
+    gl_Position = u_mvp * vec4(vec3(pos.x*u_rot.x-pos.z*u_rot.y,pos.y,pos.z*u_rot.x+pos.x*u_rot.y)+u_shift,1.0);
+    light = dot( vec4(norm.x*u_rot.x-norm.z*u_rot.y,norm.y,norm.z*u_rot.x+norm.x*u_rot.y,0.0), vec4(u_lightdir,0.0) ) * 0.25 + 0.75;
     vtex = tex;
   }
 </script>
@@ -49,6 +37,5 @@
 </head>
 <body style="padding:0;margin:0; overflow:hidden" onselectstart="return false" onload="Spindizzy()">
   <canvas id="gamecanvas" style="width: 100%; height: 100%">No canvas support</canvas>
-  <img id="tex1" src="image/texture.png" stye="display: none"/>
 </body>
 </html>

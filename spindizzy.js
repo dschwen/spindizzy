@@ -165,10 +165,10 @@ function Spindizzy() {
     gl.uniform3fv(g.u_palette, palette);
   }
 
-  var cw,ch,rot=Math.PI/4, targetRot=0, mat=[], xangle=-Math.PI/4;
+  var cw,ch,rot=0, targetRot=0, mat=[], xangle=-Math.PI/4;
   var r2=[1,0,0,0,0,Math.cos(xangle),Math.sin(xangle),0,0,-Math.sin(xangle),Math.cos(xangle),0,0,0,0,1];
   function updateProjection() {
-    var sx,sy,sz=0.1,s=Math.sin(rot),c=Math.cos(rot);
+    var sx,sy,sz=0.1,s=Math.sin(Math.PI/2*(rot+0.5)),c=Math.cos(Math.PI/2*(rot+0.5));
     sx=0.1; sy=0.1; //TODO:screen apsect ratio!
     var s1=[sx,0,0,0,0,sy,0,0,0,0,sz,0,0,-0.3,0,1];
     var r1=[c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1];
@@ -206,14 +206,25 @@ function Spindizzy() {
       gl.vertexAttribPointer(g.program.textureAttrib, 2, gl.FLOAT, false, 0, 0);
 
       // entity shift
+      if(g.e[i].phi==0) {
+        gl.uniform2f(g.u_rot, 1, 0 );
+      } else {
+        gl.uniform2f(g.u_rot, Math.cos(g.e[i].phi), Math.sin(g.e[i].phi) );
+      }
+
+      // entity shift
       gl.uniform3f(g.u_shift, g.e[i].x-4, g.e[i].y, g.e[i].z-4 );
 
       // draw call
       gl.drawArrays( gl.TRIANGLES, 0, g.e[i].numTri );
     }
-    rot+=0.02;
+    g.e[1].phi-=0.1;
     requestAnimFrame(draw);
-    updateProjection();
+    if( rot!=targetRot ) {
+      rot += rot<targetRot ? 0.1 : -0.1;
+      if( Math.abs(rot-targetRot)<0.09 ) rot=targetRot;
+      updateProjection();
+    }
     updatePalette();
   }
 
@@ -278,6 +289,7 @@ function Spindizzy() {
     gl.enableVertexAttribArray(g.program.textureAttrib);
 
     g.u_mvp      = gl.getUniformLocation(g.program, "u_mvp"),
+    g.u_rot      = gl.getUniformLocation(g.program, "u_rot"),
     g.u_shift    = gl.getUniformLocation(g.program, "u_shift"),
     g.u_lightdir = gl.getUniformLocation(g.program, "u_lightdir"),
     g.u_palette  = gl.getUniformLocation(g.program, "u_palette");
@@ -320,15 +332,15 @@ function Spindizzy() {
     g.ta = new Float32Array(glBufSize*3);
 
     // entity list (stage is e[0])
-    g.e=[{x:0,y:0,z:0}];
+    g.e=[{x:0,y:0,z:0,phi:0}];
 
     // build movable entities
     var i,l1=.25,l2=1.5,l3=0.5,l4=0.025,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2,l5=0.001;
     for( i=1; i<4; ++i ) {
-      g.e[i]={x:3,y:0,z:3};
-      g.e[i].vb =  gl.createBuffer();
-      g.e[i].nb =  gl.createBuffer();
-      g.e[i].tb =  gl.createBuffer();
+      g.e[i]={x:3,y:0,z:3,phi:0};
+      g.e[i].vb = gl.createBuffer();
+      g.e[i].nb = gl.createBuffer();
+      g.e[i].tb = gl.createBuffer();
       k2=0; k3=0;
 
       switch(i) {
@@ -360,16 +372,37 @@ function Spindizzy() {
 
       g.e[i].numTri = k3/3;
   
-      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[1].vb );
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].vb );
       gl.bufferData( gl.ARRAY_BUFFER, g.va, gl.STATIC_DRAW );
-      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[1].nb );
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].nb );
       gl.bufferData( gl.ARRAY_BUFFER, g.na, gl.STATIC_DRAW );
-      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[1].tb );
+      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].tb );
       gl.bufferData( gl.ARRAY_BUFFER, g.ta, gl.STATIC_DRAW );
     }
   }
 
   Install();
+
+  window.onkeydown = function(e) {
+    var k = e.keyCode, dir=[[-1,0],[0,1],[1,0],[0,-1]], i, d;
+    console.log(k);
+    switch(k) {
+      case 65: // a
+        targetRot--;
+        break;
+      case 68: // d
+        targetRot++;
+        break;
+      case 37: // Cursor left
+      case 38: // Cursor up
+      case 39: // Cursor right
+      case 40: // Cursor down
+        i=(k-37-targetRot)%4;
+        d=dir[i<0?i+4:i];
+        g.e[1].x += 0.1*d[0];
+        g.e[1].z += 0.1*d[1];
+    }
+  }
 
   triLevel(level1);
   draw();
