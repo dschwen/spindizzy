@@ -191,6 +191,11 @@ function Spindizzy() {
     gl.uniformMatrix4fv(g.u_mvp, false, new Float32Array(mat));
   }
 
+  var Player = {
+    direction: [0,0],
+    velocity:  [0,0]
+  };
+
   function draw() {
     // clear and render
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
@@ -218,14 +223,78 @@ function Spindizzy() {
       // draw call
       gl.drawArrays( gl.TRIANGLES, 0, g.e[i].numTri );
     }
-    g.e[1].phi-=0.1;
+    
+    // request next draw call
     requestAnimFrame(draw);
+
+    // rotate the Player
+    g.e[1].phi-=0.1;
+
+    // move the Player
+    g.e[1].x += 0.1*Player.direction[0];
+    g.e[1].z += 0.1*Player.direction[1];
+
     if( rot!=targetRot ) {
       rot += rot<targetRot ? 0.1 : -0.1;
       if( Math.abs(rot-targetRot)<0.09 ) rot=targetRot;
       updateProjection();
     }
-    updatePalette();
+
+    //updatePalette();
+  }
+
+  function setupKeyHandlers() {
+    var cursor_pressed = [false,false,false,false],
+        directions     = [[-1,0],[0,1],[1,0],[0,-1]];
+
+    function updateDirection() {
+      var i,j,d;
+
+      // clear current direction
+      Player.direction[0] = 0;
+      Player.direction[1] = 0;
+
+      for(j=0;j<4;++j) {
+        if(!cursor_pressed[j]) continue;
+        i = (j-targetRot) % 4;
+        d = directions[i<0 ? i+4 : i];
+
+        Player.direction[0] += d[0];
+        Player.direction[1] += d[1];
+      }
+    }
+
+    function keyDown(e) {
+      var k = e.keyCode;
+      switch(k) {
+        case 65: // a
+          targetRot--;
+          break;
+        case 68: // d
+          targetRot++;
+          break;
+        case 37: // Cursor left
+        case 38: // Cursor up
+        case 39: // Cursor right
+        case 40: // Cursor down
+          cursor_pressed[k-37] = true;
+      }
+      updateDirection();
+    }
+    function keyUp(e) {
+      var k = e.keyCode;
+      switch(k) {
+        case 37: // Cursor left
+        case 38: // Cursor up
+        case 39: // Cursor right
+        case 40: // Cursor down
+          cursor_pressed[k-37] = false;
+      }
+      updateDirection();
+    }
+
+    window.onkeydown = keyDown;
+    window.onkeyup   = keyUp;
   }
 
   //
@@ -312,18 +381,19 @@ function Spindizzy() {
     // load texture atlas
     var tex = gl.createTexture();
     texImage = new Image();
-    texImage.onload = function() { handleTextureLoaded(texImage, tex); }
+    texImage.onload = function() { textureLoaded(texImage, tex); }
     texImage.src = "image/texture.png";
-
-    function handleTextureLoaded(image, texture) {
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-      gl.generateMipmap(gl.TEXTURE_2D);
-    }
+  }
+    
+  // second half of setup once the texture is loaded
+  function textureLoaded(image, texture) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D);
 
     // temporary geometry buffers
     var glBufSize = 6000;
@@ -379,31 +449,18 @@ function Spindizzy() {
       gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].tb );
       gl.bufferData( gl.ARRAY_BUFFER, g.ta, gl.STATIC_DRAW );
     }
+
+    // install key handler 
+    setupKeyHandlers();
+
+    // load level
+    triLevel(level1);
+
+    // setup draw loop
+    draw();
+
   }
 
   Install();
 
-  window.onkeydown = function(e) {
-    var k = e.keyCode, dir=[[-1,0],[0,1],[1,0],[0,-1]], i, d;
-    console.log(k);
-    switch(k) {
-      case 65: // a
-        targetRot--;
-        break;
-      case 68: // d
-        targetRot++;
-        break;
-      case 37: // Cursor left
-      case 38: // Cursor up
-      case 39: // Cursor right
-      case 40: // Cursor down
-        i=(k-37-targetRot)%4;
-        d=dir[i<0?i+4:i];
-        g.e[1].x += 0.1*d[0];
-        g.e[1].z += 0.1*d[1];
-    }
-  }
-
-  triLevel(level1);
-  draw();
 }
