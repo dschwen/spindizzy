@@ -293,6 +293,34 @@ function Spindizzy() {
         dx=g.e[1].x-x,
         dy=g.e[1].z-y;
 
+    function collisionTest(dir) {
+      var tdx=dx, tdy=dy;
+      if(dir[0]<0) tdx=1.0; 
+      if(dir[0]>0) tdx=0.0; 
+      if(dir[1]<0) tdy=1.0; 
+      if(dir[1]>0) tdy=0.0; 
+
+      // out of screen collision
+      var hx = x+dir[0], hy = y+dir[1], cb, tn, i, h;
+      if( hx<0 || hy<0 || hx>=sx || hy>=sy  ) {
+        return; // TODO fetch neighboring level and corresponding tile across boundary !!! needs a new tn
+      } else {
+        cb=b[hx][hy];
+        tn=t;
+      }
+
+      // check for obstructing block in neighboring tile
+      for(i=0; i<cb.length; ++i) {
+        // tile is up too high
+        if(tn[cb[i]][1]-tn[cb[i]][2]-hbh>z) continue;
+
+        // check exact floor height
+        h = floorHeight(tn[cb[i]],tdx,tdy);
+        if(h-maxUp>z) return true;
+      }
+      return false;
+    }
+
     // moved to a new tile?
     if( x!=Player.lx || y!=Player.ly ) {
       // left map?
@@ -329,41 +357,27 @@ function Spindizzy() {
     } 
     // test hitbox
     else {
-      var hitDir = [0,0], tn, tdx=dx, tdy=dy;
+      var hitDir = [0,0], tn;
       if( dx<hbr || 1-dx<hbr || dy<hbr || 1-dy<hbr ) {
-        if(dx<hbr) { hitDir[0]=-1; tdx=1.0; }
-        if(dy<hbr) { hitDir[1]=-1; tdy=1.0; }
-        if(1-dx<hbr) { hitDir[0]=1; tdx=0.0; }
-        if(1-dy<hbr) { hitDir[1]=1; tdy=0.0; }
+        if(dx<hbr) hitDir[0]=-1;
+        if(dy<hbr) hitDir[1]=-1;
+        if(1-dx<hbr) hitDir[0]=1;
+        if(1-dy<hbr) hitDir[1]=1;
 
         // diagonal move?
         if( hitDir[0]!=0 && hitDir[1]!=0 ) {
           // test all three neighboring blocks!
-        }
-        
-        // out of screen collission
-        var hx = x+hitDir[0], hy = y+hitDir[1];
-        if( hx<0 || hy<0 || hx>=sx || hy>=sy  ) {
-          return; // TODO fetch neighboring level and corresponding tile across boundary !!! needs a new tn
+          var cx = collisionTest([hitDir[0],0])
+            , cy = collisionTest([0,hitDir[1]])
+            , cd = collisionTest(hitDir);
+
+          if(cx||(cd&&!cy)) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+          if(cy||(cd&&!cx)) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
         } else {
-          cb=b[hx][hy];
-          tn=t;
-        }
-
-        // check for obstructing block in neighboring tile
-        var blocked = false;
-        for(i=0; i<cb.length; ++i) {
-          // tile is up too high
-          if(tn[cb[i]][1]-tn[cb[i]][2]-hbh>z) continue;
-
-          // check exact floor height
-          h = floorHeight(tn[cb[i]],tdx,tdy);
-          if(h-maxUp>z) { blocked=true; break; }
-        }
-
-        if(blocked) {
-          if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
-          if(hitDir[1]!=0) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+          if(collisionTest(hitDir)) {
+            if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+            if(hitDir[1]!=0) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+          }
         }
       }
     }
