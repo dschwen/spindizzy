@@ -51,7 +51,7 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[14,0,0],[22,0,1] ], 
+    bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1] ], 
     //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
@@ -62,13 +62,12 @@ function Spindizzy() {
       this.b = b; // final level data stored in b
     },
     // x,y,bt_id level data to be added to the procedurally initialized level
-    data: [],// [[4,4,2]],
+    data: [[4,5,2],[4,4,4],[4,3,5],[4,2,6]],
     // procedural post processing
     post: function() {
       var b=this.b;
       b[3][0][0]=3;
       b[4][0][0]=3;
-      b[4][4][0]=2;
     }
   };
 
@@ -263,7 +262,7 @@ function Spindizzy() {
     var dt = 1.0, dz=0.0, h
       , maxUp = 0.1  // maximum upwards step the player can take
       , hbr=0.2      // hitbox radius
-      , hbh=2.0;     // hitbox height
+      , hbh=1.5;     // hitbox height
 
     g.e[1].x += dt*Player.velocity[0];
     g.e[1].z += dt*Player.velocity[1];
@@ -294,11 +293,14 @@ function Spindizzy() {
         dy=g.e[1].z-y;
 
     function collisionTest(dir) {
-      var tdx=dx, tdy=dy;
-      if(dir[0]<0) tdx=1.0; 
-      if(dir[0]>0) tdx=0.0; 
-      if(dir[1]<0) tdy=1.0; 
-      if(dir[1]>0) tdy=0.0; 
+      var tdx=dx, tdy=dy, sdx=dx, sdy=dy;
+      if(dir[0]<0) { tdx=1.0; sdx=0.0; } 
+      if(dir[0]>0) { tdx=0.0; sdx=1.0; }
+      if(dir[1]<0) { tdy=1.0; sdy=0.0; }
+      if(dir[1]>0) { tdy=0.0; sdy=1.0; }
+
+      // height at current tile at projected exit point
+      var sh=floorHeight(t[b[x][y][Player.li]],sdx,sdy);
 
       // out of screen collision
       var hx = x+dir[0], hy = y+dir[1], cb, tn, i, h;
@@ -316,7 +318,7 @@ function Spindizzy() {
 
         // check exact floor height
         h = floorHeight(tn[cb[i]],tdx,tdy);
-        if(h-maxUp>z) return true;
+        if(h-maxUp>sh) return true;
       }
       return false;
     }
@@ -393,6 +395,7 @@ function Spindizzy() {
       Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
       Player.onGround = true;
     } else {
+      // going down a slope?
       Player.onGround = false;
     }
 
