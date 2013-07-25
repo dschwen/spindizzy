@@ -201,6 +201,8 @@ function Spindizzy() {
   var Player = {
     direction: [0,0],
     velocity:  [0,0,0],
+    applyBrakes: false,
+    applyTurbo: false,
     onIce: false,
     onGround: true,
     onLift: 0,
@@ -248,7 +250,7 @@ function Spindizzy() {
 
     // accelerate the Player
     var drag = 0.995;
-    if(!Player.onIce) {
+    if(!Player.onIce && Player.onGround) {
       Player.velocity[0] = drag*( Player.velocity[0] + 0.001*Player.direction[0] );
       Player.velocity[1] = drag*( Player.velocity[1] + 0.001*Player.direction[1] );
     }
@@ -327,10 +329,13 @@ function Spindizzy() {
 
     // get floor height at player position
     h = floorHeight(ct,dx,dy);
-    if( g.e[1].y < h ) {
+    if( g.e[1].y <= h ) {
       g.e[1].y = h;
       dz = h-z;
-      Player.velocity[2] = dz<0?0:dz;
+      Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
+      Player.onGround = true;
+    } else {
+      Player.onGround = false;
     }
 
 
@@ -376,6 +381,12 @@ function Spindizzy() {
         case 68: // d
           targetRot++;
           break;
+        case 17: // Ctrl
+          Player.applyTurbo = true;
+          break;
+        case 32: // Space
+          Player.applyBrakes = true;
+          break;
         case 37: // Cursor left
         case 38: // Cursor up
         case 39: // Cursor right
@@ -387,6 +398,12 @@ function Spindizzy() {
     function keyUp(e) {
       var k = e.keyCode;
       switch(k) {
+        case 17: // Ctrl
+          Player.applyTurbo = false;
+          break;
+        case 32: // Space
+          Player.applyBrakes = false;
+          break;
         case 37: // Cursor left
         case 38: // Cursor up
         case 39: // Cursor right
