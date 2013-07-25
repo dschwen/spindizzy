@@ -350,8 +350,8 @@ function Spindizzy() {
 
           // select tile
           Player.li = i;
-          z = h;
         }
+        z = h;
 
         Player.lx = x;
         Player.ly = y;
