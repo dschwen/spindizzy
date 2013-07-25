@@ -260,7 +260,11 @@ function Spindizzy() {
     var l=level1, b=l.b, t=l.bt;
 
     // move the Player
-    var dt = 1.0, dz=0.0, h;
+    var dt = 1.0, dz=0.0, h
+      , maxUp = 0.1  // maximum upwards step the player can take
+      , hbr=0.2      // hitbox radius
+      , hbh=2.0;     // hitbox height
+
     g.e[1].x += dt*Player.velocity[0];
     g.e[1].z += dt*Player.velocity[1];
     g.e[1].y += dt*Player.velocity[2];
@@ -298,7 +302,7 @@ function Spindizzy() {
         return;
       }
 
-      var cb=b[x][y], maxUp = 0.1;
+      var cb=b[x][y];
 
       // find new block below player
       Player.onGround = false;
@@ -322,6 +326,41 @@ function Spindizzy() {
         Player.lx = x;
         Player.ly = y;
       } 
+    } 
+    // test hitbox
+    else {
+      var hitDir = [0,0], tn, tdx=dx, tdy=dy;
+      if( dx<hbr || 1-dx<hbr || dy<hbr || 1-dy<hbr ) {
+        if(dx<hbr) { hitDir[0]=-1; tdx=1.0; }
+        if(dy<hbr) { hitDir[1]=-1; tdy=1.0; }
+        if(1-dx<hbr) { hitDir[0]=1; tdx=0.0; }
+        if(1-dy<hbr) { hitDir[1]=1; tdy=0.0; }
+
+        // out of screen collission
+        var hx = x+hitDir[0], hy = y+hitDir[1];
+        if( hx<0 || hy<0 || hx>=sx || hy>=sy  ) {
+          return; // TODO fetch neighboring level and corresponding tile across boundary !!! needs a new t
+        } else {
+          cb=b[hx][hy];
+          tn=t;
+        }
+
+        // check for obstructing block in neighboring tile
+        var blocked = false;
+        for(i=0; i<cb.length; ++i) {
+          // tile is up too high
+          if(tn[cb[i]][1]-tn[cb[i]][2]-hbh>z) continue;
+
+          // check exact floor height
+          h = floorHeight(tn[cb[i]],tdx,tdy);
+          if(h-maxUp>z) { blocked=true; break; }
+        }
+
+        if(blocked) {
+          if(hitDir[0]!=0) Player.velocity[0] *= -1;
+          if(hitDir[1]!=0) Player.velocity[1] *= -1;
+        }
+      }
     }
 
     // current blocktable item
