@@ -51,7 +51,7 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1] ], 
+    bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1],[17,0,0] ], 
     //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
@@ -62,12 +62,14 @@ function Spindizzy() {
       this.b = b; // final level data stored in b
     },
     // x,y,bt_id level data to be added to the procedurally initialized level
-    data: [[4,5,2],[4,4,4],[4,3,5],[4,2,6]],
+    data: [[4,4,4],[4,3,5],[4,2,6]],
     // procedural post processing
     post: function() {
       var b=this.b;
       b[3][0][0]=3;
       b[4][0][0]=3;
+      b[4][5][0]=2;
+      b[3][2][0]=7;
     }
   };
 
@@ -351,7 +353,8 @@ function Spindizzy() {
           // select tile
           Player.li = i;
         }
-        z = h;
+
+        if( z<h ) z=h; // step up tiny ledges (onto lifts)
 
         Player.lx = x;
         Player.ly = y;
@@ -392,8 +395,13 @@ function Spindizzy() {
     if( g.e[1].y <= h ) {
       g.e[1].y = h;
       dz = h-z;
-      Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
-      Player.onGround = true;
+      if(ct[0]==17 && !Player.onGround ) { 
+        // trampoline
+        Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
+      } else {
+        Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
+        Player.onGround = true;
+      }
     } else {
       // going down a slope?
       Player.onGround = false;
