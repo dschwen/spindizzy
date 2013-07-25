@@ -200,7 +200,7 @@ function Spindizzy() {
 
   var Player = {
     direction: [0,0],
-    velocity:  [0,0],
+    velocity:  [0,0,0],
     onIce: false,
     onGround: true,
     onLift: 0,
@@ -252,14 +252,16 @@ function Spindizzy() {
       Player.velocity[0] = drag*( Player.velocity[0] + 0.001*Player.direction[0] );
       Player.velocity[1] = drag*( Player.velocity[1] + 0.001*Player.direction[1] );
     }
+    Player.velocity[2] -= 0.01;
 
     // get level data
     var l=level1, b=l.b, t=l.bt;
 
     // move the Player
-    var dt = 1.0;
+    var dt = 1.0, dz=0.0, h;
     g.e[1].x += dt*Player.velocity[0];
     g.e[1].z += dt*Player.velocity[1];
+    g.e[1].y += dt*Player.velocity[2];
 
     function floorHeight(ct,dx,dy) {
       var z = ct[1], g=bgeo[ct[0]];
@@ -307,10 +309,12 @@ function Spindizzy() {
           if(t[cb[i]][1]-maxUp>z) continue;
 
           // check exact floor height
-          if(floorHeight(t[cb[i]],dx,dy)-maxUp>z) continue;
+          h = floorHeight(t[cb[i]],dx,dy);
+          if(h-maxUp>z) continue;
 
           // select tile
           Player.li = i;
+          z = h;
         }
 
         Player.lx = x;
@@ -322,7 +326,13 @@ function Spindizzy() {
     var ct = t[b[x][y][Player.li]]; // TODO li may be -1
 
     // get floor height at player position
-    g.e[1].y = floorHeight(ct,dx,dy); 
+    h = floorHeight(ct,dx,dy);
+    if( g.e[1].y < h ) {
+      g.e[1].y = h;
+      dz = h-z;
+      Player.velocity[2] = dz<0?0:dz;
+    }
+
 
     // collision test
 
