@@ -336,10 +336,15 @@ function Spindizzy() {
         if(1-dx<hbr) { hitDir[0]=1; tdx=0.0; }
         if(1-dy<hbr) { hitDir[1]=1; tdy=0.0; }
 
+        // diagonal move?
+        if( hitDir[0]!=0 && hitDir[1]!=0 ) {
+          // test all three neighboring blocks!
+        }
+        
         // out of screen collission
         var hx = x+hitDir[0], hy = y+hitDir[1];
         if( hx<0 || hy<0 || hx>=sx || hy>=sy  ) {
-          return; // TODO fetch neighboring level and corresponding tile across boundary !!! needs a new t
+          return; // TODO fetch neighboring level and corresponding tile across boundary !!! needs a new tn
         } else {
           cb=b[hx][hy];
           tn=t;
@@ -357,8 +362,8 @@ function Spindizzy() {
         }
 
         if(blocked) {
-          if(hitDir[0]!=0) Player.velocity[0] *= -1;
-          if(hitDir[1]!=0) Player.velocity[1] *= -1;
+          if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+          if(hitDir[1]!=0) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
         }
       }
     }
