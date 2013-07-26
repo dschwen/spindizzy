@@ -51,7 +51,7 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1],[17,0,0] ], 
+    bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1],[17,0,0],[30,0,0] ], 
     //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
@@ -70,6 +70,10 @@ function Spindizzy() {
       b[4][0][0]=3;
       b[4][5][0]=2;
       b[3][2][0]=7;
+      b[5][2][0]=8;
+      b[5][3][0]=8;
+      b[5][4][0]=8;
+      b[5][5][0]=8;
     }
   };
 
@@ -271,154 +275,164 @@ function Spindizzy() {
     var l=level1, b=l.b, t=l.bt;
 
     // move the Player
-    var dt = 1.0, dz=0.0, h
+    var dz=0.0, h
       , maxUp = 0.1  // maximum upwards step the player can take
       , hbr=0.2      // hitbox radius
       , hbh=1.5;     // hitbox height
+    
+    // determine total velocity
+    var v = Math.sqrt(Player.velocity[0]*Player.velocity[0] + Player.velocity[2]*Player.velocity[2])
+      , istep = Math.ceil(v/0.05)
+      , dt = 1.0/istep;
 
-    g.e[1].x += dt*Player.velocity[0];
-    g.e[1].z += dt*Player.velocity[1];
-    g.e[1].y += dt*Player.velocity[2];
+    // multiple integration steps at high velocities
+    for( step=0; step<istep; ++step ) {
 
-    function floorHeight(ct,dx,dy) {
-      var z = ct[1], g=bgeo[ct[0]];
-      if(g.s!=2) {
-        if(dx-dy>0) { // upper triangle
-          return z + g.h[1] + (g.h[0]-g.h[1])*(1-dx) + (g.h[2]-g.h[1])*dy;
-        } else {      // lower triangle
-          return z + g.h[3] + (g.h[2]-g.h[3])*dx + (g.h[0]-g.h[3])*(1-dy);
-        }
-      } else {
-        if(dx+dy<1) { // upper triangle
-          return z + g.h[0] + (g.h[1]-g.h[0])*dx + (g.h[3]-g.h[0])*dy;
-        } else {      // lower triangle
-          return z + g.h[2] + (g.h[3]-g.h[2])*(1-dx) + (g.h[1]-g.h[2])*(1-dy);
-        }
-      }
-    }
+      g.e[1].x += dt*Player.velocity[0];
+      g.e[1].z += dt*Player.velocity[1];
+      g.e[1].y += dt*Player.velocity[2];
 
-    // player tile and in-tile position
-    var x=Math.floor(g.e[1].x),
-        y=Math.floor(g.e[1].z),
-        z=g.e[1].y;
-        dx=g.e[1].x-x,
-        dy=g.e[1].z-y;
-
-    function collisionTest(dir) {
-      var tdx=dx, tdy=dy, sdx=dx, sdy=dy;
-      if(dir[0]<0) { tdx=1.0; sdx=0.0; } 
-      if(dir[0]>0) { tdx=0.0; sdx=1.0; }
-      if(dir[1]<0) { tdy=1.0; sdy=0.0; }
-      if(dir[1]>0) { tdy=0.0; sdy=1.0; }
-
-      // height at current tile at projected exit point
-      var sh=floorHeight(t[b[x][y][Player.li]],sdx,sdy);
-
-      // out of screen collision
-      var hx = x+dir[0], hy = y+dir[1], cb, tn, i, h;
-      if( hx<0 || hy<0 || hx>=sx || hy>=sy  ) {
-        return; // TODO fetch neighboring level and corresponding tile across boundary !!! needs a new tn
-      } else {
-        cb=b[hx][hy];
-        tn=t;
-      }
-
-      // check for obstructing block in neighboring tile
-      for(i=0; i<cb.length; ++i) {
-        // tile is up too high
-        if(tn[cb[i]][1]-tn[cb[i]][2]-hbh>z) continue;
-
-        // check exact floor height
-        h = floorHeight(tn[cb[i]],tdx,tdy);
-        if(h-maxUp>sh) return true;
-      }
-      return false;
-    }
-
-    // moved to a new tile?
-    if( x!=Player.lx || y!=Player.ly ) {
-      // left map?
-      if( x<0 || x>=sx || y<0 || y>=sy ) {
-        if( x<0 || x>=sx ) Player.velocity[0] *= -1;
-        if( y<0 || y>=sy ) Player.velocity[1] *= -1;
-        return;
-      }
-
-      var cb=b[x][y];
-
-      // find new block below player
-      Player.onGround = false;
-      if(cb.length==0) {
-        Player.li = -1;
-      } else {
-        var i;
-        for(i=0; i<cb.length; ++i) {
-          // tile is up too high
-          if(t[cb[i]][1]-maxUp>z) continue;
-
-          // check exact floor height
-          h = floorHeight(t[cb[i]],dx,dy);
-          if(h-maxUp>z) continue;
-
-          // select tile
-          Player.li = i;
-        }
-
-        if( z<h ) z=h; // step up tiny ledges (onto lifts)
-
-        Player.lx = x;
-        Player.ly = y;
-      } 
-    } 
-    // test hitbox
-    else {
-      var hitDir = [0,0], tn;
-      if( dx<hbr || 1-dx<hbr || dy<hbr || 1-dy<hbr ) {
-        if(dx<hbr) hitDir[0]=-1;
-        if(dy<hbr) hitDir[1]=-1;
-        if(1-dx<hbr) hitDir[0]=1;
-        if(1-dy<hbr) hitDir[1]=1;
-
-        // diagonal move?
-        if( hitDir[0]!=0 && hitDir[1]!=0 ) {
-          // test all three neighboring blocks!
-          var cx = collisionTest([hitDir[0],0])
-            , cy = collisionTest([0,hitDir[1]])
-            , cd = collisionTest(hitDir);
-
-          if(cx||(cd&&!cy)) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
-          if(cy||(cd&&!cx)) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+      function floorHeight(ct,dx,dy) {
+        var z = ct[1], g=bgeo[ct[0]];
+        if(g.s!=2) {
+          if(dx-dy>0) { // upper triangle
+            return z + g.h[1] + (g.h[0]-g.h[1])*(1-dx) + (g.h[2]-g.h[1])*dy;
+          } else {      // lower triangle
+            return z + g.h[3] + (g.h[2]-g.h[3])*dx + (g.h[0]-g.h[3])*(1-dy);
+          }
         } else {
-          if(collisionTest(hitDir)) {
-            if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
-            if(hitDir[1]!=0) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+          if(dx+dy<1) { // upper triangle
+            return z + g.h[0] + (g.h[1]-g.h[0])*dx + (g.h[3]-g.h[0])*dy;
+          } else {      // lower triangle
+            return z + g.h[2] + (g.h[3]-g.h[2])*(1-dx) + (g.h[1]-g.h[2])*(1-dy);
           }
         }
       }
-    }
 
-    // current blocktable item
-    var ct = t[b[x][y][Player.li]]; // TODO li may be -1
+      // player tile and in-tile position
+      var x=Math.floor(g.e[1].x),
+          y=Math.floor(g.e[1].z),
+          z=g.e[1].y;
+          dx=g.e[1].x-x,
+          dy=g.e[1].z-y;
 
-    // get floor height at player position
-    h = floorHeight(ct,dx,dy);
-    if( g.e[1].y <= h ) {
-      g.e[1].y = h;
-      dz = h-z;
-      if(ct[0]==17 && !Player.onGround && Player.velocity[2]<-0.05 ) { 
-        // trampoline
-        Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
-      } else {
-        Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
-        Player.onGround = true;
+      function collisionTest(dir) {
+        var tdx=dx, tdy=dy, sdx=dx, sdy=dy;
+        if(dir[0]<0) { tdx=1.0; sdx=0.0; } 
+        if(dir[0]>0) { tdx=0.0; sdx=1.0; }
+        if(dir[1]<0) { tdy=1.0; sdy=0.0; }
+        if(dir[1]>0) { tdy=0.0; sdy=1.0; }
+
+        // height at current tile at projected exit point
+        var sh=floorHeight(t[b[x][y][Player.li]],sdx,sdy);
+
+        // out of screen collision
+        var hx = x+dir[0], hy = y+dir[1], cb, tn, i, h;
+        if( hx<0 || hy<0 || hx>=sx || hy>=sy  ) {
+          return; // TODO fetch neighboring level and corresponding tile across boundary !!! needs a new tn
+        } else {
+          cb=b[hx][hy];
+          tn=t;
+        }
+
+        // check for obstructing block in neighboring tile
+        for(i=0; i<cb.length; ++i) {
+          // tile is up too high
+          if(tn[cb[i]][1]-tn[cb[i]][2]-hbh>z) continue;
+
+          // check exact floor height
+          h = floorHeight(tn[cb[i]],tdx,tdy);
+          if(h-maxUp>sh) return true;
+        }
+        return false;
       }
-    } else {
-      // going down a slope?
-      Player.onGround = false;
-    }
 
+      // moved to a new tile?
+      if( x!=Player.lx || y!=Player.ly ) {
+        // left map?
+        if( x<0 || x>=sx || y<0 || y>=sy ) {
+          if( x<0 || x>=sx ) Player.velocity[0] *= -1;
+          if( y<0 || y>=sy ) Player.velocity[1] *= -1;
+          return;
+        }
 
-    // collision test
+        var cb=b[x][y];
+
+        // find new block below player
+        Player.onGround = false;
+        if(cb.length==0) {
+          Player.li = -1;
+        } else {
+          var i;
+          for(i=0; i<cb.length; ++i) {
+            // tile is up too high
+            if(t[cb[i]][1]-maxUp>z) continue;
+
+            // check exact floor height
+            h = floorHeight(t[cb[i]],dx,dy);
+            if(h-maxUp>z) continue;
+
+            // select tile
+            Player.li = i;
+
+            // on ice?
+            Player.onIce = (t[cb[i]][0]==30);
+          }
+
+          if( z<h ) z=h; // step up tiny ledges (onto lifts)
+
+          Player.lx = x;
+          Player.ly = y;
+        } 
+      } 
+      // test hitbox
+      else {
+        var hitDir = [0,0], tn;
+        if( dx<hbr || 1-dx<hbr || dy<hbr || 1-dy<hbr ) {
+          if(dx<hbr) hitDir[0]=-1;
+          if(dy<hbr) hitDir[1]=-1;
+          if(1-dx<hbr) hitDir[0]=1;
+          if(1-dy<hbr) hitDir[1]=1;
+
+          // diagonal move?
+          if( hitDir[0]!=0 && hitDir[1]!=0 ) {
+            // test all three neighboring blocks!
+            var cx = collisionTest([hitDir[0],0])
+              , cy = collisionTest([0,hitDir[1]])
+              , cd = collisionTest(hitDir);
+
+            if(cx||(cd&&!cy)) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+            if(cy||(cd&&!cx)) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+          } else {
+            if(collisionTest(hitDir)) {
+              if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+              if(hitDir[1]!=0) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+            }
+          }
+        }
+      }
+
+      // current blocktable item
+      var ct = t[b[x][y][Player.li]]; // TODO li may be -1
+
+      // get floor height at player position
+      h = floorHeight(ct,dx,dy);
+      if( g.e[1].y <= h ) {
+        g.e[1].y = h;
+        dz = h-z;
+        if(ct[0]==17 && !Player.onGround && Player.velocity[2]<-0.05 ) { 
+          // trampoline
+          Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
+        } else {
+          Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
+          Player.onGround = true;
+        }
+      } else {
+        // going down a slope?
+        Player.onGround = false;
+      }
+
+    } // integration step loop
 
 
     if( rot!=targetRot ) {
