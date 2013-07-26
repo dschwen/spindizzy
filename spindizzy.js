@@ -395,7 +395,7 @@ function Spindizzy() {
     if( g.e[1].y <= h ) {
       g.e[1].y = h;
       dz = h-z;
-      if(ct[0]==17 && !Player.onGround ) { 
+      if(ct[0]==17 && !Player.onGround && Player.velocity[2]<-0.05 ) { 
         // trampoline
         Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
       } else {
