@@ -180,9 +180,9 @@ function Spindizzy() {
   var cw,ch,rot=0, targetRot=0, mat=[], xangle=-Math.PI/4;
   var r2=[1,0,0,0,0,Math.cos(xangle),Math.sin(xangle),0,0,-Math.sin(xangle),Math.cos(xangle),0,0,0,0,1];
   function updateProjection() {
-    var sx,sy,sz=0.1,s=Math.sin(Math.PI/2*(rot+0.5)),c=Math.cos(Math.PI/2*(rot+0.5));
-    sx=0.1; sy=0.1; //TODO:screen apsect ratio!
-    var s1=[sx,0,0,0,0,sy,0,0,0,0,sz,0,0,-0.3,0,1];
+    var ax,ay,az=0.1,s=Math.sin(Math.PI/2*(rot+0.5)),c=Math.cos(Math.PI/2*(rot+0.5));
+    ax=0.1; ay=0.1; //TODO:screen apsect ratio!
+    var s1=[ax,0,0,0,0,ay,0,0,0,0,az,0,0,-0.3,0,1];
     var r1=[c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1];
     
     function mul(a,b) {
@@ -209,7 +209,7 @@ function Spindizzy() {
     applyBrakes: false,
     applyTurbo: false,
     onIce: false,
-    onGround: true,
+    onGround: false,
     onLift: 0,
     lx:-1,ly:-1,li:-1 // last block below player
   };
@@ -260,7 +260,7 @@ function Spindizzy() {
     g.e[1].phi-=0.1;
 
     // accelerate the Player
-    var drag = 0.995, accel = Player.applyTurbo ? 0.002 : 0.001
+    var drag = 0.995, accel = Player.applyTurbo ? 0.002 : 0.001, gravity = 0.01, slopeGrav = 0.0025;
     if(!Player.onIce && Player.onGround) {
       if( Player.applyBrakes ) {
         Player.velocity[0] *= 0.9;
@@ -269,13 +269,13 @@ function Spindizzy() {
       Player.velocity[0] = drag*( Player.velocity[0] + accel*Player.direction[0] );
       Player.velocity[1] = drag*( Player.velocity[1] + accel*Player.direction[1] );
     }
-    Player.velocity[2] -= 0.01;
+    Player.velocity[2] -= gravity;
 
     // get level data
     var l=level1, b=l.b, t=l.bt;
 
     // move the Player
-    var dz=0.0, h
+    var dz, h
       , maxUp = 0.1  // maximum upwards step the player can take
       , hbr=0.2      // hitbox radius
       , hbh=1.5;     // hitbox height
@@ -287,10 +287,26 @@ function Spindizzy() {
 
     // multiple integration steps at high velocities
     for( step=0; step<istep; ++step ) {
+      var mx,my;
 
-      g.e[1].x += dt*Player.velocity[0];
-      g.e[1].z += dt*Player.velocity[1];
+      mx = dt*Player.velocity[0];
+      my = dt*Player.velocity[1];
+
+      if(Player.onGround) {
+        var d = floorSlope(Player.tile,g.e[1].x % 1.0,g.e[1].z % 1.0);
+      
+        // vertical velocity is determined by horizontal speed and slope if the player is on the ground
+        Player.velocity[2] = (d[0]*mx+d[1]*my)/dt;
+
+        // accelerate player downhill
+        if( d[0]!=0 ) Player.velocity[0] += Math.sqrt( d[0]*d[0]*slopeGrav*slopeGrav/(d[0]*d[0]+1) );
+        if( d[1]!=0 ) Player.velocity[1] += Math.sqrt( d[1]*d[1]*slopeGrav*slopeGrav/(d[1]*d[1]+1) );
+      }
+
+      g.e[1].x += mx;
+      g.e[1].z += my;
       g.e[1].y += dt*Player.velocity[2];
+
 
       function floorHeight(ct,dx,dy) {
         var z = ct[1], g=bgeo[ct[0]];
@@ -306,6 +322,15 @@ function Spindizzy() {
           } else {      // lower triangle
             return z + g.h[2] + (g.h[3]-g.h[2])*(1-dx) + (g.h[1]-g.h[2])*(1-dy);
           }
+        }
+      }
+
+      function floorSlope(ct,dx,dy) {
+        var z = ct[1], g=bgeo[ct[0]];
+        if( (g.s!=2) ? (dx-dy>0) : (dx+dy<1) ) {
+          return g.d[0];
+        } else {      // lower triangle
+          return g.d[1];
         }
       }
 
@@ -426,6 +451,7 @@ function Spindizzy() {
         } else {
           Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
           Player.onGround = true;
+          Player.tile = ct;
         }
       } else {
         // going down a slope?
@@ -442,6 +468,24 @@ function Spindizzy() {
     }
 
     //updatePalette();
+  }
+
+  function cacheBlockSlopes() {
+    var i,g;
+    for(i=0; i<bgeo.length; ++i) {
+      g=bgeo[i];
+      if(g.s!=2) {
+        g.d = [
+          [ g.h[1]-g.h[0], g.h[2]-g.h[1] ],  // upper triangle
+          [ g.h[2]-g.h[3], g.h[3]-g.h[0] ]   // lower triangle
+        ];
+      } else {
+        g.d = [
+          [ g.h[1]-g.h[0], g.h[3]-g.h[0] ],  // upper triangle
+          [ g.h[2]-g.h[3], g.h[2]-g.h[1] ]   // lower triangle
+        ];
+      }
+    }
   }
 
   function setupKeyHandlers() {
@@ -601,6 +645,9 @@ function Spindizzy() {
     texImage = new Image();
     texImage.onload = function() { textureLoaded(texImage, tex); }
     texImage.src = "image/texture.png";
+
+    // cache block slopes
+    cacheBlockSlopes();
   }
     
   // second half of setup once the texture is loaded
