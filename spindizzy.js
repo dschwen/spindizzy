@@ -239,9 +239,12 @@ function Spindizzy() {
     }
   }
 
+  var frame=0;
+
   function gameLoop() {
     // draw stage and entities
     draw();
+    frame++;
 
     // request next gameLoop invocation at constant frame rate
     requestAnimFrame(gameLoop);
@@ -645,6 +648,7 @@ function Spindizzy() {
     // load level
     triLevel(level1);
 
+    setInterval(function(){ console.log(frame, 'fps'); frame=0; },1000);
     // enter game loop
     gameLoop();
 
