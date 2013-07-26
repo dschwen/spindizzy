@@ -116,7 +116,7 @@ function Spindizzy() {
   function triLevel(l) {
     if( !('b'in l) ) prepareLevel(l);
 
-    var a,c,bg, i,j,j2,x,y,x0,y0,z,z0, base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]];
+    var a,c,bg, i,j,j2,x,y,x0,y0,z,z0, base=[[0,0],[1,0],[1,1],[0,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],cpr=0.75;
     k2=0; k3=0;
 
     for(x=0;x<sx;++x) {
@@ -133,9 +133,9 @@ function Spindizzy() {
             // insert two triangles for each side
             if( a[2]!=0 || bg.h[j]!=0 || bg.h[j2]!=0 ) {
               vntPush([x+base[j][0],z0,y+base[j][1], x+base[j2][0],z0,y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
-                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,0.5*(1-a[2]-bg.h[j])],3);
+                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[0,1, 1,1, 0,1-(cpr*(a[2]+bg.h[j]))],3);
               vntPush([x+base[j2][0],z0,y+base[j2][1], x+base[j2][0],z+bg.h[j2],y+base[j2][1], x+base[j][0],z+bg.h[j],y+base[j][1]], 
-                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0.5*(1-a[2]-bg.h[j2]), 0,0.5*(1-a[2]-bg.h[j]) ],3);
+                      [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,1-(cpr*(a[2]+bg.h[j2])), 0,1-(cpr*(a[2]+bg.h[j])) ],3);
             }
           }
           // insert two triangles for the top surface
