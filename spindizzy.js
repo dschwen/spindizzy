@@ -214,6 +214,9 @@ function Spindizzy() {
     // clear and render
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
+    // player position for pseudoshadow
+    gl.uniform3f(g.u_playerpos, g.e[1].x-4, g.e[1].y+1, g.e[1].z-4 );
+
     var i;
     for(i=0;i<2;++i) {
       // bind buffers
@@ -253,10 +256,14 @@ function Spindizzy() {
     g.e[1].phi-=0.1;
 
     // accelerate the Player
-    var drag = 0.995;
+    var drag = 0.995, accel = Player.applyTurbo ? 0.002 : 0.001
     if(!Player.onIce && Player.onGround) {
-      Player.velocity[0] = drag*( Player.velocity[0] + 0.001*Player.direction[0] );
-      Player.velocity[1] = drag*( Player.velocity[1] + 0.001*Player.direction[1] );
+      if( Player.applyBrakes ) {
+        Player.velocity[0] *= 0.9;
+        Player.velocity[1] *= 0.9;
+      }
+      Player.velocity[0] = drag*( Player.velocity[0] + accel*Player.direction[0] );
+      Player.velocity[1] = drag*( Player.velocity[1] + accel*Player.direction[1] );
     }
     Player.velocity[2] -= 0.01;
 
@@ -446,6 +453,7 @@ function Spindizzy() {
 
     function keyDown(e) {
       var k = e.keyCode;
+      //console.log(k);
       switch(k) {
         case 65: // a
           targetRot--;
@@ -453,6 +461,7 @@ function Spindizzy() {
         case 68: // d
           targetRot++;
           break;
+        case 16: // Shift
         case 17: // Ctrl
           Player.applyTurbo = true;
           break;
@@ -470,6 +479,7 @@ function Spindizzy() {
     function keyUp(e) {
       var k = e.keyCode;
       switch(k) {
+        case 16: // Shift
         case 17: // Ctrl
           Player.applyTurbo = false;
           break;
@@ -554,6 +564,8 @@ function Spindizzy() {
     g.u_shift    = gl.getUniformLocation(g.program, "u_shift"),
     g.u_lightdir = gl.getUniformLocation(g.program, "u_lightdir"),
     g.u_palette  = gl.getUniformLocation(g.program, "u_palette");
+
+    g.u_playerpos = gl.getUniformLocation(g.program, "u_playerpos");
     
     gl.uniform1i(gl.getUniformLocation(g.program, "u_sampler"), 0);
 
