@@ -11,38 +11,40 @@ function Spindizzy() {
   //   1 = split along NS axis
   //   2 = split along EW axis
   //
+  // r = safe tile for respawning
+  //
   var bgeo = [
-    { h:[0,0,0,0],s:0,t:2 }, //  0 flat floor
-    { h:[1,1,0,0],s:0,t:2 }, //  1 shallow ramp NE
-    { h:[0,1,1,0],s:0,t:2 }, //  2 shallow ramp ES
-    { h:[0,0,1,1],s:0,t:2 }, //  3 shallow ramp SW
-    { h:[1,0,0,1],s:0,t:2 }, //  4 shallow ramp WN
-    { h:[2,2,0,0],s:0,t:2 }, //  5 steep ramp NE
-    { h:[0,2,2,0],s:0,t:2 }, //  6 steep ramp ES
-    { h:[0,0,2,2],s:0,t:2 }, //  7 steep ramp SW
-    { h:[2,0,0,2],s:0,t:2 }, //  8 steep ramp WN
-    { h:[1,0,0,0],s:1,t:4 }, //  9 shallow gable N
-    { h:[0,1,0,0],s:2,t:5 }, // 10 shallow gable E
-    { h:[0,0,1,0],s:1,t:4 }, // 11 shallow gable S
-    { h:[0,0,0,1],s:2,t:5 }, // 12 shallow gable W
-    { h:[2,0,0,0],s:1,t:4 }, // 13 steep gable N
-    { h:[0,2,0,0],s:2,t:5 }, // 14 steep gable E
-    { h:[0,0,2,0],s:1,t:4 }, // 15 steep gable S
-    { h:[0,0,0,2],s:2,t:5 }, // 16 steep gable W
-    { h:[0,0,0,0],s:0,t:1 }, // 17 trampoline
-    { h:[0,0,0,0],s:0,t:6 }, // 18 switch circle
-    { h:[0,0,0,0],s:0,t:7 }, // 19 switch diamond
-    { h:[0,0,0,0],s:0,t:8 }, // 20 neutralizer
-    { h:[0,0,0,0],s:0,t:11 },// 21 water
-    { h:[0,0,0,0],s:0,t:15 },// 22 arrow NE
-    { h:[0,0,0,0],s:0,t:16 },// 23 arrow ES
-    { h:[0,0,0,0],s:0,t:17 },// 24 arrow SW
-    { h:[0,0,0,0],s:0,t:18 },// 25 arrow WN
-    { h:[1,0,0,0],s:2,t:5 }, // 26 banked corner N
-    { h:[0,1,0,0],s:1,t:4 }, // 27 banked corner E
-    { h:[0,0,1,0],s:2,t:5 }, // 28 banked corner S
-    { h:[0,0,0,1],s:1,t:4 }, // 29 banked corner W
-    { h:[0,0,0,0],s:1,t:19 } // 30 ice
+    { h:[0,0,0,0],s:0,t:2,r:true }, //  0 flat floor
+    { h:[1,1,0,0],s:0,t:2,r:true }, //  1 shallow ramp NE
+    { h:[0,1,1,0],s:0,t:2,r:true }, //  2 shallow ramp ES
+    { h:[0,0,1,1],s:0,t:2,r:true }, //  3 shallow ramp SW
+    { h:[1,0,0,1],s:0,t:2,r:true }, //  4 shallow ramp WN
+    { h:[2,2,0,0],s:0,t:2 },        //  5 steep ramp NE
+    { h:[0,2,2,0],s:0,t:2 },        //  6 steep ramp ES
+    { h:[0,0,2,2],s:0,t:2 },        //  7 steep ramp SW
+    { h:[2,0,0,2],s:0,t:2 },        //  8 steep ramp WN
+    { h:[1,0,0,0],s:1,t:4,r:true }, //  9 shallow gable N
+    { h:[0,1,0,0],s:2,t:5,r:true }, // 10 shallow gable E
+    { h:[0,0,1,0],s:1,t:4,r:true }, // 11 shallow gable S
+    { h:[0,0,0,1],s:2,t:5,r:true }, // 12 shallow gable W
+    { h:[2,0,0,0],s:1,t:4 },        // 13 steep gable N
+    { h:[0,2,0,0],s:2,t:5 },        // 14 steep gable E
+    { h:[0,0,2,0],s:1,t:4 },        // 15 steep gable S
+    { h:[0,0,0,2],s:2,t:5 },        // 16 steep gable W
+    { h:[0,0,0,0],s:0,t:1 },        // 17 trampoline
+    { h:[0,0,0,0],s:0,t:6,r:true }, // 18 switch circle
+    { h:[0,0,0,0],s:0,t:7,r:true }, // 19 switch diamond
+    { h:[0,0,0,0],s:0,t:8,r:true }, // 20 neutralizer
+    { h:[0,0,0,0],s:0,t:11 },       // 21 water
+    { h:[0,0,0,0],s:0,t:15,r:true },// 22 arrow NE
+    { h:[0,0,0,0],s:0,t:16,r:true },// 23 arrow ES
+    { h:[0,0,0,0],s:0,t:17,r:true },// 24 arrow SW
+    { h:[0,0,0,0],s:0,t:18,r:true },// 25 arrow WN
+    { h:[1,0,0,0],s:2,t:5,r:true }, // 26 banked corner N
+    { h:[0,1,0,0],s:1,t:4,r:true }, // 27 banked corner E
+    { h:[0,0,1,0],s:2,t:5,r:true }, // 28 banked corner S
+    { h:[0,0,0,1],s:1,t:4,r:true }, // 29 banked corner W
+    { h:[0,0,0,0],s:1,t:19,r:true } // 30 ice
   ];
 
   // Stage size
@@ -213,7 +215,8 @@ function Spindizzy() {
     onGround: false,
     onWater: false,
     onLift: 0,
-    lx:-1,ly:-1,li:-1 // last block below player
+    lx:-1,ly:-1,li:-1, // last block below player
+    rx:0,ry:0,ri:0     // respawn position (last safe block)
   };
 
   function draw() {
@@ -459,6 +462,13 @@ function Spindizzy() {
           Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
           Player.onGround = true;
           Player.tile = ct;
+
+          // set respawn point
+          if(bgeo[ct[0]].r) {
+            Player.rx = x;
+            Player.ry = y;
+            Player.ri = Player.li;
+          }
         }
       } else {
         // going down a slope?
@@ -471,6 +481,10 @@ function Spindizzy() {
     if( (Player.onWater && z<-5) || z<-100 ) {
       console.log("dead!");
       // reset to last good position
+      Player.velocity = [0,0,0];
+      g.e[1].x = Player.rx+0.5;
+      g.e[1].z = Player.ry+0.5;
+      g.e[1].y = floorHeight(t[b[Player.rx][Player.ry][Player.ri]],0.5,0.5);
     }
 
     if( rot!=targetRot ) {
