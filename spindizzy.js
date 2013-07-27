@@ -51,7 +51,7 @@ function Spindizzy() {
   // Test-level
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1],[17,0,0],[30,0,0] ], 
+    bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1],[17,0,0],[30,0,0],[21,0,0] ], 
     //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
@@ -74,6 +74,7 @@ function Spindizzy() {
       b[5][3][0]=8;
       b[5][4][0]=8;
       b[5][5][0]=8;
+      b[1][2][0]=9;
     }
   };
 
@@ -210,6 +211,7 @@ function Spindizzy() {
     applyTurbo: false,
     onIce: false,
     onGround: false,
+    onWater: false,
     onLift: 0,
     lx:-1,ly:-1,li:-1 // last block below player
   };
@@ -260,9 +262,13 @@ function Spindizzy() {
     g.e[1].phi-=0.1;
 
     // accelerate the Player
-    var drag = 0.995, accel = Player.applyTurbo ? 0.002 : 0.001, gravity = 0.01, slopeGrav = 0.0025;
-    if(!Player.onIce && Player.onGround) {
-      if( Player.applyBrakes ) {
+    var drag = Player.onIce ? 1.0 : 0.995 
+      , accel = ( Player.applyTurbo ? 0.002 : 0.001 ) * ( Player.onIce ? 0.1 : 1 )
+      , gravity = 0.01
+      , slopeGrav = 0.0025;
+    
+    if(Player.onGround) {
+      if( !Player.onIce && Player.applyBrakes ) {
         Player.velocity[0] *= 0.9;
         Player.velocity[1] *= 0.9;
       }
@@ -402,6 +408,7 @@ function Spindizzy() {
 
             // on ice?
             Player.onIce = (t[cb[i]][0]==30);
+            Player.onWater = (t[cb[i]][0]==21);
           }
 
           if( z<h ) z=h; // step up tiny ledges (onto lifts)
@@ -442,7 +449,7 @@ function Spindizzy() {
 
       // get floor height at player position
       h = floorHeight(ct,dx,dy);
-      if( g.e[1].y <= h ) {
+      if( !Player.onWater && g.e[1].y <= h ) {
         g.e[1].y = h;
         dz = h-z;
         if(ct[0]==17 && !Player.onGround && Player.velocity[2]<-0.05 ) { 
@@ -460,6 +467,11 @@ function Spindizzy() {
 
     } // integration step loop
 
+
+    if( (Player.onWater && z<-5) || z<-100 ) {
+      console.log("dead!");
+      // reset to last good position
+    }
 
     if( rot!=targetRot ) {
       rot += rot<targetRot ? 0.1 : -0.1;
@@ -672,7 +684,7 @@ function Spindizzy() {
     // build movable entities
     var i,l1=.25,l2=1.5,l3=0.5,l4=0.025,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2,l5=0.001;
     for( i=1; i<4; ++i ) {
-      g.e[i]={x:3,y:0,z:3,phi:0};
+      g.e[i]={x:3.5,y:0,z:3.5,phi:0};
       g.e[i].vb = gl.createBuffer();
       g.e[i].nb = gl.createBuffer();
       g.e[i].tb = gl.createBuffer();
