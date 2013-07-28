@@ -50,10 +50,39 @@ function Spindizzy() {
   // Stage size
   var sx=8, sy=8;
 
-  // Test-level
+  // Test-levels
   var level1 = {
     // bocktable [bgeo_id,z,base_depth]
     bt: [ [0,0,0],[0,1,2],[5,0,0],[22,0,1],[1,2,1],[1,3,1],[0,4,1],[17,0,0],[30,0,0],[21,0,0] ], 
+    //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
+    // initializer function for procedural level generation (optional)
+    pre: function() { 
+      var x,y,b = [];
+      for(x=0;x<sx;++x) {
+        b[x]=[]; for(y=0;y<sx;++y) b[x][y]=(x==0||y==0||x==sx-1||y==sy-1)?[1]:[0]; 
+      }
+      this.b = b; // final level data stored in b
+    },
+    // x,y,bt_id level data to be added to the procedurally initialized level
+    data: [[4,4,4],[4,3,5],[4,2,6]],
+    // procedural post processing
+    post: function() {
+      var b=this.b;
+      b[3][0][0]=3;
+      b[4][0][0]=3;
+      b[4][5][0]=2;
+      b[3][2][0]=7;
+      b[5][2][0]=8;
+      b[5][3][0]=8;
+      b[5][4][0]=8;
+      b[5][5][0]=8;
+      b[1][2][0]=9;
+    }
+  };
+  // Test-levels
+  var level2 = {
+    // bocktable [bgeo_id,z,base_depth]
+    bt: [ [0,0,0],[0,1,2],[17,0,0],[21,0,0] ], 
     //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
@@ -481,6 +510,8 @@ function Spindizzy() {
     if( (Player.onWater && z<-5) || z<-100 ) {
       console.log("dead!");
       // reset to last good position
+      Player.lx=-1;
+      Player.ly=-1;
       Player.velocity = [0,0,0];
       g.e[1].x = Player.rx+0.5;
       g.e[1].z = Player.ry+0.5;
@@ -670,7 +701,7 @@ function Spindizzy() {
     var tex = gl.createTexture();
     texImage = new Image();
     texImage.onload = function() { textureLoaded(texImage, tex); }
-    texImage.src = "image/texture.png";
+    texImage.src = "assets/texture.png";
 
     // cache block slopes
     cacheBlockSlopes();
