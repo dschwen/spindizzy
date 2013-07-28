@@ -47,6 +47,29 @@ function Spindizzy() {
     { h:[0,0,0,0],s:1,t:19,r:true } // 30 ice
   ];
 
+  var nsample=5, snd = [
+    { f:'assets/snd_trampoline.wav'}  // trampoline bouncing sound
+  ];
+  
+  function cacheSounds() {
+    var i,j;
+    for(i=0; i<snd.length; ++i) {
+      snd[i].s=[];
+      snd[i].c=0;
+      for(j=0; j<nsample; ++j) {
+        snd[i].s.push(new Audio(snd[i].f));
+      }
+    }
+  }
+
+  function playSound(n) {
+    var s = snd[n].s[snd[n].c];
+    s.pause();
+    s.currentTime = 0;
+    s.play();
+    snd[n].c = (snd[n].c+1) % nsample;
+  }
+
   // Stage size
   var sx=8, sy=8;
 
@@ -487,6 +510,7 @@ function Spindizzy() {
         if(ct[0]==17 && !Player.onGround && Player.velocity[2]<-0.05 ) { 
           // trampoline
           Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
+          playSound(0);
         } else {
           Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
           Player.onGround = true;
@@ -702,6 +726,9 @@ function Spindizzy() {
     texImage = new Image();
     texImage.onload = function() { textureLoaded(texImage, tex); }
     texImage.src = "assets/texture.png";
+
+    // load samples
+    cacheSounds();
 
     // cache block slopes
     cacheBlockSlopes();
