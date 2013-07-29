@@ -48,9 +48,9 @@ function Spindizzy() {
   ];
 
   var nsample=5, snd = [
-    { f:'assets/snd_trampoline.wav'},  // 0 trampoline bouncing sound
-    { f:'assets/snd_clank.wav'},       // 1 player hitting the ground or a wall
-    { f:'assets/snd_splash.wav'}       // 2 water tile sound
+    { f:'assets/snd_trampoline.wav', v:0.75 },  // 0 trampoline bouncing sound
+    { f:'assets/snd_clank.wav', v:0.25 },       // 1 player hitting the ground or a wall
+    { f:'assets/snd_splash.wav', v:1.0 }        // 2 water tile sound
   ];
   
   function cacheSounds() {
@@ -67,6 +67,7 @@ function Spindizzy() {
   function playSound(n) {
     var s = snd[n].s[snd[n].c];
     s.load();
+    s.volume = snd[n].v;
     s.play();
     snd[n].c = (snd[n].c+1) % nsample;
   }
@@ -464,10 +465,7 @@ function Spindizzy() {
 
             // on ice?
             Player.onIce = (t[cb[i]][0]==30);
-            if(t[cb[i]][0]==21) {
-              Player.onWater = true;
-              playSound(2);
-            }
+            Player.onWater = (t[cb[i]][0]==21);
           }
 
           if( z<h ) z=h; // step up tiny ledges (onto lifts)
@@ -485,21 +483,37 @@ function Spindizzy() {
           if(1-dx<hbr) hitDir[0]=1;
           if(1-dy<hbr) hitDir[1]=1;
 
+          function sign(a) { return a<0?-1:1; }
+
           // diagonal move?
+          var sound = false;
           if( hitDir[0]!=0 && hitDir[1]!=0 ) {
             // test all three neighboring blocks!
             var cx = collisionTest([hitDir[0],0])
               , cy = collisionTest([0,hitDir[1]])
               , cd = collisionTest(hitDir);
 
-            if(cx||(cd&&!cy)) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
-            if(cy||(cd&&!cx)) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
-            if(cx||cy||cd) playSound(1);
+            if(cx||(cd&&!cy)) {
+              sound |= ( sign(Player.velocity[0]) == sign(hitDir[0]) );
+              Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+            }
+            if(cy||(cd&&!cx)) {
+              sound |= ( sign(Player.velocity[1]) == sign(hitDir[1]) );
+              Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+            }
+            if(sound) playSound(1);
           } else {
             if(collisionTest(hitDir)) {
-              if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
-              if(hitDir[1]!=0) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
-              playSound(1);
+              //if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+              if(hitDir[0]!=0) {
+                sound |= ( sign(Player.velocity[0]) == sign(hitDir[0]) );
+                Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
+              }
+              if(hitDir[1]!=0) {
+                sound |= ( sign(Player.velocity[1]) == sign(hitDir[1]) );
+                Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+              }
+              if(sound) playSound(1);
             }
           }
         }
@@ -518,7 +532,7 @@ function Spindizzy() {
           Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
           playSound(0);
         } else {
-          if(Player.velocity[2]<-0.05) playSound(1);
+          if(Player.velocity[2]<-0.05) playSound(1); //TODO this triggers downhill on slopes!!
           Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
           Player.onGround = true;
           Player.tile = ct;
@@ -534,11 +548,11 @@ function Spindizzy() {
         // going down a slope?
         Player.onGround = false;
       }
-
     } // integration step loop
 
 
-    if( (Player.onWater && z<-5) || z<-100 ) {
+    if( (Player.onWater && z<-2) || z<-100 ) {
+      playSound(2);
       console.log("dead!");
       // reset to last good position
       Player.lx=-1;
