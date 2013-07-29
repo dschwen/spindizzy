@@ -106,13 +106,12 @@ function Spindizzy() {
   };
   var level2 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[22,0,0],[23,0,0],[24,0,0],[25,0,0],[0,0,1] ], 
-    //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
+    bt: [ [1,0,1],[3,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
       var x,y,b = [];
       for(x=0;x<sx;++x) {
-        b[x]=[]; for(y=0;y<sx;++y) b[x][y]=(x==0||y==0||y==sy-1)?[1]:(x==sx-1?[10]:[0]); 
+        b[x]=[[],[],[],[],[],[],[],[]]; for(y=3;y<5;++y) b[x][y]=(y==3)?[0]:[1]; 
       }
       this.b = b; // final level data stored in b
     },
@@ -121,24 +120,14 @@ function Spindizzy() {
     // procedural post processing
     post: function() {
       var b=this.b;
-      b[3][0][0]=5;
-      b[4][0][0]=3;
-      b[3][1][0]=6;
-      b[4][1][0]=6;
-      b[3][7][0]=5;
-      b[4][7][0]=3;
-      b[3][6][0]=8;
-      b[4][6][0]=8;
-      b[0][3][0]=2;
-      b[0][4][0]=4;
-      b[1][3][0]=9;
-      b[1][4][0]=9;
+      //b[3][0][0]=5;
     }
   };
 
   var levels = [
     // 0 start room 
-    "[[[[1],[1],[1],[2],[4],[1],[1],[1]],[[1],[0],[0],[9],[9],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[5],[6],[0],[0],[0],[0],[8],[0]],[[3],[6],[0],[0],[0],[0],[8],[3]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[10],[10],[10],[10],[10],[10],[1]]],[[0,0,0],[0,1,2],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[22,0,0],[23,0,0],[24,0,0],[25,0,0],[0,0,1]]]"
+    level2
+    //"[[[[1],[1],[1],[2],[4],[1],[1],[1]],[[1],[0],[0],[9],[9],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[5],[6],[0],[0],[0],[0],[8],[0]],[[3],[6],[0],[0],[0],[0],[8],[3]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[10],[10],[10],[10],[10],[10],[1]]],[[0,0,0],[0,1,2],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[22,0,0],[23,0,0],[24,0,0],[25,0,0],[0,0,1]]]"
   ]
       gems = [
     [[0,0,1],[1,6,0]] // 0 start room 
@@ -353,7 +342,7 @@ function Spindizzy() {
     }
 
     // draw gems
-    var lg = gems[0];
+    var lg = gems[currentLevel];
     for(i=0;i<lg.length;++i) {
       g.e[4].x=lg[i][0]+0.5;
       g.e[4].z=lg[i][1]+0.5;
@@ -362,7 +351,7 @@ function Spindizzy() {
     }
   }
 
-  var frame=0;
+  var frame=0, currentLevel=0;
 
   function gameLoop() {
     // draw stage and entities
@@ -395,7 +384,7 @@ function Spindizzy() {
     Player.velocity[2] -= gravity;
 
     // get level data
-    var l=level2, b=l.b, t=l.bt;
+    var l=levels[currentLevel], b=l.b, t=l.bt;
 
     // move the Player
     var dz, h
@@ -841,7 +830,7 @@ function Spindizzy() {
     // build movable entities
     var i,l1,l2,l3,l4,l5,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2;
     for( i=1; i<5; ++i ) {
-      g.e[i]={x:3.5,y:0,z:3.5,phi:0};
+      g.e[i]={x:3.5,y:1,z:3.5,phi:0};
       g.e[i].vb = gl.createBuffer();
       g.e[i].nb = gl.createBuffer();
       g.e[i].tb = gl.createBuffer();
