@@ -139,6 +139,9 @@ function Spindizzy() {
   var levels = [
     // 0 start room 
     "[[[[1],[1],[1],[2],[4],[1],[1],[1]],[[1],[0],[0],[9],[9],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[5],[6],[0],[0],[0],[0],[8],[0]],[[3],[6],[0],[0],[0],[0],[8],[3]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[10],[10],[10],[10],[10],[10],[1]]],[[0,0,0],[0,1,2],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[22,0,0],[23,0,0],[24,0,0],[25,0,0],[0,0,1]]]"
+  ]
+      gems = [
+    [[0,0,1],[1,6,0]] // 0 start room 
   ];
 
   // Test-levels
@@ -312,7 +315,30 @@ function Spindizzy() {
     rx:0,ry:0,ri:0     // respawn position (last safe block)
   };
 
-  function draw() {
+  function drawEntity(e) {
+    // bind buffers
+    gl.bindBuffer(gl.ARRAY_BUFFER, e.nb );
+    gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, e.vb );
+    gl.vertexAttribPointer(g.program.vertexPosAttrib, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, e.tb );
+    gl.vertexAttribPointer(g.program.textureAttrib, 2, gl.FLOAT, false, 0, 0);
+
+    // entity shift
+    if(e.phi==0) {
+      gl.uniform2f(g.u_rot, 1, 0 );
+    } else {
+      gl.uniform2f(g.u_rot, Math.cos(e.phi), Math.sin(e.phi) );
+    }
+
+    // entity shift
+    gl.uniform3f(g.u_shift, e.x-4, e.y, e.z-4 );
+
+    // draw call
+    gl.drawArrays( gl.TRIANGLES, 0, e.numTri );
+  }
+
+  function drawStage() {
     // clear and render
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
     
@@ -320,28 +346,19 @@ function Spindizzy() {
     gl.uniform3f(g.u_playerpos, g.e[1].x-4, g.e[1].y+1, g.e[1].z-4 );
 
     var i;
-    for(i=0;i<5;++i) {
-      if( !g.e[i].show ) continue;
-      // bind buffers
-      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].nb );
-      gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
-      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].vb );
-      gl.vertexAttribPointer(g.program.vertexPosAttrib, 3, gl.FLOAT, false, 0, 0);
-      gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].tb );
-      gl.vertexAttribPointer(g.program.textureAttrib, 2, gl.FLOAT, false, 0, 0);
 
-      // entity shift
-      if(g.e[i].phi==0) {
-        gl.uniform2f(g.u_rot, 1, 0 );
-      } else {
-        gl.uniform2f(g.u_rot, Math.cos(g.e[i].phi), Math.sin(g.e[i].phi) );
-      }
+    // draw stage, player, and lifts
+    for(i=0;i<4;++i) {
+      if( g.e[i].show ) drawEntity(g.e[i]);
+    }
 
-      // entity shift
-      gl.uniform3f(g.u_shift, g.e[i].x-4, g.e[i].y, g.e[i].z-4 );
-
-      // draw call
-      gl.drawArrays( gl.TRIANGLES, 0, g.e[i].numTri );
+    // draw gems
+    var lg = gems[0];
+    for(i=0;i<lg.length;++i) {
+      g.e[4].x=lg[i][0]+0.5;
+      g.e[4].z=lg[i][1]+0.5;
+      g.e[4].y=lg[i][2];
+      drawEntity(g.e[4]);
     }
   }
 
@@ -349,7 +366,7 @@ function Spindizzy() {
 
   function gameLoop() {
     // draw stage and entities
-    draw();
+    drawStage();
     frame++;
 
     // request next gameLoop invocation at constant frame rate
@@ -382,7 +399,7 @@ function Spindizzy() {
 
     // move the Player
     var dz, h
-      , maxUp = 0.1  // maximum upwards step the player can take
+      , maxUp = 0.2  // maximum upwards step the player can take
       , hbr=0.2      // hitbox radius
       , hbh=1.5;     // hitbox height
     
@@ -405,8 +422,10 @@ function Spindizzy() {
         Player.velocity[2] = (d[0]*mx+d[1]*my)/dt;
 
         // accelerate player downhill
-        if( d[0]!=0 ) Player.velocity[0] += Math.sqrt( d[0]*d[0]*slopeGrav*slopeGrav/(d[0]*d[0]+1) );
-        if( d[1]!=0 ) Player.velocity[1] += Math.sqrt( d[1]*d[1]*slopeGrav*slopeGrav/(d[1]*d[1]+1) );
+        if( d[0]<0 ) Player.velocity[0] += Math.sqrt( d[0]*d[0]*slopeGrav*slopeGrav/(d[0]*d[0]+1) );
+        if( d[1]<0 ) Player.velocity[1] += Math.sqrt( d[1]*d[1]*slopeGrav*slopeGrav/(d[1]*d[1]+1) );
+        if( d[0]>0 ) Player.velocity[0] -= Math.sqrt( d[0]*d[0]*slopeGrav*slopeGrav/(d[0]*d[0]+1) );
+        if( d[1]>0 ) Player.velocity[1] -= Math.sqrt( d[1]*d[1]*slopeGrav*slopeGrav/(d[1]*d[1]+1) );
       }
 
       g.e[1].x += mx;
@@ -856,7 +875,7 @@ function Spindizzy() {
           vntPush([ 0,l5,0, 1,l5,1, 0,l5,1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],i+7);
           break;
         case 4: // diamond
-          l1=0.5;l2=1;l3=2;
+          l1=0.4;l2=0.8;l3=1.6;
           vntPush([ l1,l2,-l1, 0,l3,0, -l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,0,.5,.5,1,0],20);
           vntPush([ l1,l2,l1, 0,l3,0, l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[1,0,.5,.5,1,1],20);
           vntPush([ -l1,l2,l1, 0,l3,0, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,1,.5,.5,0,1],20);
