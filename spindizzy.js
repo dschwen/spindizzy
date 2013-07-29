@@ -104,33 +104,72 @@ function Spindizzy() {
       b[1][2][0]=9;
     }
   };
-  // Test-levels
   var level2 = {
     // bocktable [bgeo_id,z,base_depth]
-    bt: [ [0,0,0],[0,1,2],[17,0,0],[21,0,0] ], 
+    bt: [ [0,0,0],[0,1,2],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[22,0,0],[23,0,0],[24,0,0],[25,0,0],[0,0,1] ], 
     //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
     // initializer function for procedural level generation (optional)
     pre: function() { 
       var x,y,b = [];
       for(x=0;x<sx;++x) {
-        b[x]=[]; for(y=0;y<sx;++y) b[x][y]=(x==0||y==0||x==sx-1||y==sy-1)?[1]:[0]; 
+        b[x]=[]; for(y=0;y<sx;++y) b[x][y]=(x==0||y==0||y==sy-1)?[1]:(x==sx-1?[10]:[0]); 
       }
       this.b = b; // final level data stored in b
     },
     // x,y,bt_id level data to be added to the procedurally initialized level
-    data: [[4,4,4],[4,3,5],[4,2,6]],
+    data: [],
     // procedural post processing
     post: function() {
       var b=this.b;
-      b[3][0][0]=3;
+      b[3][0][0]=5;
       b[4][0][0]=3;
+      b[3][1][0]=6;
+      b[4][1][0]=6;
+      b[3][7][0]=5;
+      b[4][7][0]=3;
+      b[3][6][0]=8;
+      b[4][6][0]=8;
+      b[0][3][0]=2;
+      b[0][4][0]=4;
+      b[1][3][0]=9;
+      b[1][4][0]=9;
+    }
+  };
+
+  var levels = [
+    // 0 start room 
+    "[[[[1],[1],[1],[2],[4],[1],[1],[1]],[[1],[0],[0],[9],[9],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[5],[6],[0],[0],[0],[0],[8],[0]],[[3],[6],[0],[0],[0],[0],[8],[3]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[0],[0],[0],[0],[0],[0],[1]],[[1],[10],[10],[10],[10],[10],[10],[1]]],[[0,0,0],[0,1,2],[1,0,1],[2,0,1],[3,0,1],[4,0,1],[22,0,0],[23,0,0],[24,0,0],[25,0,0],[0,0,1]]]"
+  ];
+
+  // Test-levels
+  var level1 = {
+    // bocktable [bgeo_id,z,base_depth]
+    bt: [ [0,0,0],[4,0,0],[17,0,0],[21,0,0] ], 
+    //bt: [ [0,0,0],[0,1,2],[1,2,3],[22,0,1] ], 
+    // initializer function for procedural level generation (optional)
+    pre: function() { 
+      var x,y,b = [];
+      for(x=0;x<sx;++x) {
+        b[x]=[]; for(y=0;y<sx;++y) b[x][y]=[3];
+      }
+      this.b = b; // final level data stored in b
+    },
+    // x,y,bt_id level data to be added to the procedurally initialized level
+    data: [],
+    // procedural post processing
+    post: function() {
+      var b=this.b;
+      b[3][3][0]=0;
+      b[4][3][0]=0;
+      b[5][3][0]=0;
+      b[6][3][0]=0;
+      b[7][3][0]=0;
+      b[7][4][0]=0;
+      b[7][5][0]=0;
+      b[6][5][0]=1;
       b[4][5][0]=2;
-      b[3][2][0]=7;
-      b[5][2][0]=8;
-      b[5][3][0]=8;
-      b[5][4][0]=8;
-      b[5][5][0]=8;
-      b[1][2][0]=9;
+      b[2][5][0]=2;
+      b[0][5][0]=0;
     }
   };
 
@@ -281,7 +320,8 @@ function Spindizzy() {
     gl.uniform3f(g.u_playerpos, g.e[1].x-4, g.e[1].y+1, g.e[1].z-4 );
 
     var i;
-    for(i=0;i<2;++i) {
+    for(i=0;i<5;++i) {
+      if( !g.e[i].show ) continue;
       // bind buffers
       gl.bindBuffer(gl.ARRAY_BUFFER, g.e[i].nb );
       gl.vertexAttribPointer(g.program.normalPosAttrib, 3, gl.FLOAT, false, 0, 0);
@@ -317,6 +357,9 @@ function Spindizzy() {
 
     // rotate the Player
     g.e[1].phi-=0.1;
+    
+    // rotate the diamonds
+    g.e[4].phi = (g.e[4].phi+Math.PI/2+0.1) % (2*Math.PI);
 
     // accelerate the Player
     var drag = Player.onIce ? 1.0 : 0.995 
@@ -335,7 +378,7 @@ function Spindizzy() {
     Player.velocity[2] -= gravity;
 
     // get level data
-    var l=level1, b=l.b, t=l.bt;
+    var l=level2, b=l.b, t=l.bt;
 
     // move the Player
     var dz, h
@@ -774,11 +817,11 @@ function Spindizzy() {
     g.ta = new Float32Array(glBufSize*3);
 
     // entity list (stage is e[0])
-    g.e=[{x:0,y:0,z:0,phi:0}];
+    g.e=[{x:0,y:0,z:0,phi:0,show:true}];
 
     // build movable entities
-    var i,l1=.25,l2=1.5,l3=0.5,l4=0.025,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2,l5=0.001;
-    for( i=1; i<4; ++i ) {
+    var i,l1,l2,l3,l4,l5,base=[[-1,-1],[1,-1],[1,1],[-1,1]],norm=[[0,-1],[-1,0],[0,1],[1,0]],j,j2;
+    for( i=1; i<5; ++i ) {
       g.e[i]={x:3.5,y:0,z:3.5,phi:0};
       g.e[i].vb = gl.createBuffer();
       g.e[i].nb = gl.createBuffer();
@@ -787,6 +830,7 @@ function Spindizzy() {
 
       switch(i) {
         case 1: // player
+          l1=.25; l2=1.5; l3=0.5; l4=0.025; l5=0.001;
           // top
           vntPush([ -l1,l2,-l1, l1,l2,-l1, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],13);
           vntPush([ -l1,l2,-l1, l1,l2,l1, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],13);
@@ -804,11 +848,26 @@ function Spindizzy() {
             vntPush([l4*base[j2][0],0,l4*base[j2][1], l4*base[j2][0],(l1+l2)/2,l4*base[j2][1], l4*base[j][0],(l1+l2)/2,l4*base[j][1]], 
                     [norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1],norm[j][0],0,norm[j][1]],[1,1, 1,0, 0,0 ],14);
           }
+          g.e[i].show = true;
           break;
         case 2: // lift1
         case 3: // lift2
           vntPush([ 0,l5,0, 1,l5,0, 1,l5,1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,0,1,1],i+7);
           vntPush([ 0,l5,0, 1,l5,1, 0,l5,1 ], [0,1,0,0,1,0,0,1,0],[0,0,1,1,0,1],i+7);
+          break;
+        case 4: // diamond
+          l1=0.5;l2=1;l3=2;
+          vntPush([ l1,l2,-l1, 0,l3,0, -l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,0,.5,.5,1,0],20);
+          vntPush([ l1,l2,l1, 0,l3,0, l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[1,0,.5,.5,1,1],20);
+          vntPush([ -l1,l2,l1, 0,l3,0, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,1,.5,.5,0,1],20);
+          vntPush([ -l1,l2,-l1, 0,l3,0, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[0,1,.5,.5,0,0],20);
+          l3=0.0;
+          vntPush([ -l1,l2,-l1, 0,l3,0, l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,0,.5,.5,1,0],20);
+          vntPush([ l1,l2,-l1, 0,l3,0, l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,0,.5,.5,1,1],20);
+          vntPush([ l1,l2,l1, 0,l3,0, -l1,l2,l1 ], [0,1,0,0,1,0,0,1,0],[1,1,.5,.5,0,1],20);
+          vntPush([ -l1,l2,l1, 0,l3,0, -l1,l2,-l1 ], [0,1,0,0,1,0,0,1,0],[0,1,.5,.5,0,0],20);
+          g.e[i].x=0.5; g.e[i].y=1; g.e[i].z=0.5;
+          g.e[i].show = true;
           break;
       }
 
@@ -826,7 +885,7 @@ function Spindizzy() {
     setupKeyHandlers();
 
     // load level
-    triLevel(level1);
+    triLevel(level2);
 
     setInterval(function(){ console.log(frame, 'fps'); frame=0; },1000);
     // enter game loop
