@@ -48,7 +48,9 @@ function Spindizzy() {
   ];
 
   var nsample=5, snd = [
-    { f:'assets/snd_trampoline.wav'}  // trampoline bouncing sound
+    { f:'assets/snd_trampoline.wav'},  // 0 trampoline bouncing sound
+    { f:'assets/snd_clank.wav'},       // 1 player hitting the ground or a wall
+    { f:'assets/snd_splash.wav'}       // 2 water tile sound
   ];
   
   function cacheSounds() {
@@ -64,8 +66,7 @@ function Spindizzy() {
 
   function playSound(n) {
     var s = snd[n].s[snd[n].c];
-    s.pause();
-    s.currentTime = 0;
+    s.load();
     s.play();
     snd[n].c = (snd[n].c+1) % nsample;
   }
@@ -463,7 +464,10 @@ function Spindizzy() {
 
             // on ice?
             Player.onIce = (t[cb[i]][0]==30);
-            Player.onWater = (t[cb[i]][0]==21);
+            if(t[cb[i]][0]==21) {
+              Player.onWater = true;
+              playSound(2);
+            }
           }
 
           if( z<h ) z=h; // step up tiny ledges (onto lifts)
@@ -490,10 +494,12 @@ function Spindizzy() {
 
             if(cx||(cd&&!cy)) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
             if(cy||(cd&&!cx)) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+            if(cx||cy||cd) playSound(1);
           } else {
             if(collisionTest(hitDir)) {
               if(hitDir[0]!=0) Player.velocity[0] = -Math.abs(Player.velocity[0])*hitDir[0];
               if(hitDir[1]!=0) Player.velocity[1] = -Math.abs(Player.velocity[1])*hitDir[1];
+              playSound(1);
             }
           }
         }
@@ -512,6 +518,7 @@ function Spindizzy() {
           Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
           playSound(0);
         } else {
+          if(Player.velocity[2]<-0.05) playSound(1);
           Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
           Player.onGround = true;
           Player.tile = ct;
@@ -536,6 +543,8 @@ function Spindizzy() {
       // reset to last good position
       Player.lx=-1;
       Player.ly=-1;
+      Player.onWater=false;
+      Player.onGround=true;
       Player.velocity = [0,0,0];
       g.e[1].x = Player.rx+0.5;
       g.e[1].z = Player.ry+0.5;
