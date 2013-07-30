@@ -532,7 +532,7 @@ function Spindizzy() {
           Player.velocity[2] = Math.abs(Player.velocity[2])*0.95;
           playSound(0);
         } else {
-          if(Player.velocity[2]<-0.05) playSound(1); //TODO this triggers downhill on slopes!!
+          if(!Player.onGround && Player.velocity[2]<-0.05) playSound(1); //TODO this triggers downhill on slopes!!
           Player.velocity[2] = (dz<0||!Player.onGround)?0:dz;
           Player.onGround = true;
           Player.tile = ct;
